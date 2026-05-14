@@ -52,9 +52,9 @@ by arthurrc](https://editor.p5js.org/arthurrc/sketches/Bya9WiAnm)
 
 ### User Input
 
-The user input mechanic controls interactions with the ecosystem. Left-clicking plants a flower, clicking and dragging scatters seeds, leading to wildflower trail to bloom after a delay. Double-clicking a specific tree creates a bird’s nest, bringing birds and chirping audio. Pressing R triggers rain that speeds up growth. Pressing X causes damage- trees fall, water turns murky, flowers wilt. Three X presses trigger collapse. Every action has an environmental consequence, making the viewer feel responsible for the world they are shaping which directly reflects our theme that human choices carry real, lasting impact on nature.
+The user input mechanic controls user interactions within the living landscape. Different forms of clicking will result in various behaviors of the ecosystem. A left-click plants a flower, while clicking and dragging scatters seeds across the terrain, leaving a trail of wildflowers that bloom after a short delay. Double-clicking a tree summons a bird’s nest, drawing birds to the branches and filling the scene with chirping audio. In addition, environmental behaviors will result from specific keypresses: R calls down rain, accelerating the growth of surrounding flowers, while X introduces damage, such as trees falling, water clouding with murk, and flowers wilting. Three consecutive X presses will also push the ecosystem into full collapse. As a result, each user action has a visible consequence, making them feel a great sense of responsibility for the ecosystem they are shaping. This directly reflects our theme of human choices carrying real, lasting impact on nature.
 
-p5.js events: mousePressed(), mouseDragged(), doubleClicked(), keyPressed()
+**p5.js functions:** `mousePressed()`, `mouseDragged()`, `doubleClicked()`, `keyPressed()`
 
 (Angel Huang)
 
@@ -90,7 +90,7 @@ The mechanic uses p5. sound’s FFT (Fast Fourier Transform) analyser to split t
 
 Importantly, the audio layer responds to the ecosystem health score that is set by the user input mechanic. When the ecosystem is thriving, a layered nature soundscape plays rich with birdsong, flowing water and wind through the leaves, and visuals are vibrant and energetic. As health fades, the soundscape gradually recedes, instruments dropping off one by one. At collapse, an ominous low drone takes over, and visuals desaturate and slow. This makes the audio a direct emotional analogue to the state of the world; the audience hears the ecosystem dying before they see it.
 
-p5.js functions: loadSound(), p5.FFT(), fft.analyze(), fft.getEnergy(), p5.Amplitude(), amp.getLevel(), map(), song.play(), song.pause()
+**p5.js functions:** `loadSound()`, `p5.FFT()`, `fft.analyze()`, `fft.getEnergy()`, `p5.Amplitude()`, `amp.getLevel()`, `map()`, `song.play()`, `song.pause()`
 
 (Nishant Reddy)
 
