@@ -1,9 +1,5 @@
 Creative coding major project repository
 
-
-Testing
-
-working
 ### Quiz 10 - Major Project Pitch
 
 # The Living Landscape
@@ -70,7 +66,11 @@ This mechanic makes the scene feel alive at all times. p5.js's `noise()` animate
 
 ### Time-Based
 
-Time-based Text Here
+Time-based
+
+The time-based mechanism would give the ecosystem its emotional rhythm, where each action triggers a cascading delay of actions and consequences, making the response feel more natural than instant. Like when you click a flow, the tree grows, and the river becomes clearer, or two after a few seconds. A health threshold would activate the project's wow moment, in which the sky would slowly transition to dusk, and fireflies would appear, growing in number with sustained positive interaction rather than being directly triggered. On the other hand, there's a destructive path: collapse unfolds gradually over many frames. Time transforms clicks into consequences and consequences into story, creating a world that grows and deteriorates at its own pace.
+
+**p5.js functions:** `millis()`, `frameCount`, `lerp()`
 
 ---
 
