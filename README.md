@@ -52,7 +52,11 @@ by arthurrc](https://editor.p5js.org/arthurrc/sketches/Bya9WiAnm)
 
 ### User Input
 
-User Input Text Here
+The user input mechanic controls interactions with the ecosystem. Left-clicking plants a flower, clicking and dragging scatters seeds, leading to wildflower trail to bloom after a delay. Double-clicking a specific tree creates a bird’s nest, bringing birds and chirping audio. Pressing R triggers rain that speeds up growth. Pressing X causes damage- trees fall, water turns murky, flowers wilt. Three X presses trigger collapse. Every action has an environmental consequence, making the viewer feel responsible for the world they are shaping which directly reflects our theme that human choices carry real, lasting impact on nature.
+
+p5.js events: mousePressed(), mouseDragged(), doubleClicked(), keyPressed()
+
+(Angel Huang)
 
 ---
 
@@ -61,6 +65,8 @@ User Input Text Here
 This mechanic makes the scene feel alive at all times. p5.js's `noise()` animates the entire world simultaneously- grass sways in coordinated wind motion, water ripples across noise-displaced vertices, clouds drift, rain particles follow winding paths and terrain has organic undulation. The `random()` function ensures every flower planted is unique- a different petal count, size, colour and stem curve each click. Noise and randomness together make sure the scene is never static and no interaction looks identical. This reflects nature's unpredictability inspired by the continuous textured motion of *Nomadic Tribe*.
 
 **p5.js functions:** `noise()`, `noiseSeed()`, `random()`, `beginShape()`, `vertex()`
+
+(Shweta Kamble)
 
 ---
 
@@ -71,6 +77,8 @@ Time-based
 The time-based mechanism would give the ecosystem its emotional rhythm, where each action triggers a cascading delay of actions and consequences, making the response feel more natural than instant. Like when you click a flow, the tree grows, and the river becomes clearer, or two after a few seconds. A health threshold would activate the project's wow moment, in which the sky would slowly transition to dusk, and fireflies would appear, growing in number with sustained positive interaction rather than being directly triggered. On the other hand, there's a destructive path: collapse unfolds gradually over many frames. Time transforms clicks into consequences and consequences into story, creating a world that grows and deteriorates at its own pace.
 
 **p5.js functions:** `millis()`, `frameCount`, `lerp()`
+
+(Rachel Seah)
 
 ---
 
@@ -83,6 +91,8 @@ The mechanic uses p5. sound’s FFT (Fast Fourier Transform) analyser to split t
 Importantly, the audio layer responds to the ecosystem health score that is set by the user input mechanic. When the ecosystem is thriving, a layered nature soundscape plays rich with birdsong, flowing water and wind through the leaves, and visuals are vibrant and energetic. As health fades, the soundscape gradually recedes, instruments dropping off one by one. At collapse, an ominous low drone takes over, and visuals desaturate and slow. This makes the audio a direct emotional analogue to the state of the world; the audience hears the ecosystem dying before they see it.
 
 p5.js functions: loadSound(), p5.FFT(), fft.analyze(), fft.getEnergy(), p5.Amplitude(), amp.getLevel(), map(), song.play(), song.pause()
+
+(Nishant Reddy)
 
 ---
 
