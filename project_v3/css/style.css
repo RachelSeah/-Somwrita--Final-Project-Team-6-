@@ -1,0 +1,157 @@
+/* css/style.css */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #e8e4de;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Gallery wall ────────────────────────────────────────── */
+#gallery {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #e8e4de;
+}
+
+/* Subtle baseboard at bottom */
+#gallery::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 28px;
+  background: #d6d1ca;
+}
+
+/* ── Hanging wire ────────────────────────────────────────── */
+#wire {
+  width: 160px;
+  height: 14px;
+  position: relative;
+  margin-bottom: -1px;
+}
+
+#wire svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Outer frame ─────────────────────────────────────────── */
+#frame {
+  position: relative;
+  padding: 16px;
+  background: #5c3d1e;
+  box-shadow:
+    inset 2px 2px 0px #7a5230,
+    inset -2px -2px 0px #3d2610,
+    6px 10px 32px rgba(0,0,0,0.35);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+/* Inner bevel */
+#frame::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 2px solid #3d2610;
+  box-shadow: inset 1px 1px 0 #7a5230;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ── Artwork canvas ──────────────────────────────────────── */
+#scene {
+  position: relative;
+  width: 1455px;
+  height: 1087px;
+  overflow: hidden;
+  display: block;
+  clip-path: inset(0);
+}
+
+/* Scale the whole frame down to fit the screen */
+#frame-wrap {
+  transform-origin: center center;
+}
+
+/* ── Each layer div stacks on top of the previous ────────── */
+.scene-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.scene-layer.interactive {
+  pointer-events: auto;
+}
+
+.layer-day,
+.layer-night {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.layer-day object,
+.layer-night object {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── Gallery label ───────────────────────────────────────── */
+#label {
+  margin-top: 18px;
+  background: #f5f2ee;
+  border: 0.5px solid #c8c0b4;
+  border-radius: 2px;
+  overflow: hidden;
+  padding: 8px 20px 10px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+#label .title {
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 13px;
+  color: #444;
+  display: block;
+}
+
+#label .meta {
+  font-family: Georgia, serif;
+  font-size: 11px;
+  color: #888;
+  display: block;
+}
+
+/* ── p5 canvas overlay ───────────────────────────────────── */
+#p5-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
