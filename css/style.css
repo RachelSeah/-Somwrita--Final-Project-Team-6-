@@ -1,0 +1,141 @@
+/* css/style.css */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #e8e4de;
+}
+
+#gallery {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background: #e8e4de;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Baseboard */
+#gallery::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 24px;
+  background: #d6d1ca;
+}
+
+#wire {
+  width: 120px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+#frame-wrap {
+  transform-origin: center top;
+  flex-shrink: 0;
+}
+
+#frame {
+  position: relative;
+  padding: 14px;
+  background: #5c3d1e;
+  box-shadow:
+    inset 2px 2px 0px #7a5230,
+    inset -2px -2px 0px #3d2610,
+    6px 10px 32px rgba(0,0,0,0.35);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+#frame::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 2px solid #3d2610;
+  box-shadow: inset 1px 1px 0 #7a5230;
+  pointer-events: none;
+  z-index: 2;
+}
+
+#scene {
+  position: relative;
+  width: 1455px;
+  height: 1087px;
+  overflow: hidden;
+  display: block;
+  clip-path: inset(0);
+}
+
+.scene-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.scene-layer.interactive {
+  pointer-events: auto;
+}
+
+.layer-day,
+.layer-night {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.layer-day svg,
+.layer-night svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#label {
+  margin-top: 14px;
+  background: #f5f2ee;
+  border: 0.5px solid #c8c0b4;
+  border-radius: 2px;
+  padding: 7px 18px 9px;
+  text-align: center;
+  line-height: 1.5;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+#label .title {
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 13px;
+  color: #444;
+  display: block;
+}
+
+#label .meta {
+  font-family: Georgia, serif;
+  font-size: 11px;
+  color: #888;
+  display: block;
+}
+
+#p5-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
