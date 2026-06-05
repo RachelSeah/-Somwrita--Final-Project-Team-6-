@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Karma</title>
+
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+    <!--  p5.js libraries -->
+    <script src="libraries/p5.min.js"></script>
+    <script src="libraries/p5.sound.min.js"></script>
+
+    <!--  our own js files -->
+    <!--  Do NOT change the order -->
+    <!--  layers.js and state.js are loaded first because everything else reads from them. -->
+    <script src="js/layers.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/noise.js"></script>
+    <script src="js/time.js"></script>
+    <script src="js/user_interaction.js"></script>
+    <script src="js/sound.js"></script>
+    <!-- sketch.js is loaded last — it uses everything above -->
+  </head>
+
+  <body>
+    <script src="sketch.js"></script>
+  </body>
+</html>
