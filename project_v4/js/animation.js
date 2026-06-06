@@ -215,38 +215,38 @@ window.addEventListener('scene-ready', () => {
 // AUDIO REACTIVITY
 // ─────────────────────────────────────────────────────────────
 
-function animateAudio() {
-  const sun = document.getElementById('layer-sun');
-  if (sun) {
-    const pulse = 1 + state.audioBass * 0.25;
-    sun.style.transform       = `scale(${pulse})`;
-    sun.style.transformOrigin = '50% 50%';
-  }
+// function animateAudio() {
+//   const sun = document.getElementById('layer-sun');
+//   if (sun) {
+//     const pulse = 1 + state.audioBass * 0.25;
+//     sun.style.transform       = `scale(${pulse})`;
+//     sun.style.transformOrigin = '50% 50%';
+//   }
 
-  const treeIds = ['layer-tree-1','layer-tree-2','layer-tree-3',
-                   'layer-tree-4','layer-tree-5','layer-tree-6'];
-  treeIds.forEach((id, i) => {
-    const el = document.getElementById(id);
-    if (el) {
-      const sway = state.audioMid * 4 * (i % 2 === 0 ? 1 : -1);
-      el.style.transform       = `rotate(${sway}deg)`;
-      el.style.transformOrigin = 'bottom center';
-    }
-  });
+//   const treeIds = ['layer-tree-1','layer-tree-2','layer-tree-3',
+//                    'layer-tree-4','layer-tree-5','layer-tree-6'];
+//   treeIds.forEach((id, i) => {
+//     const el = document.getElementById(id);
+//     if (el) {
+//       const sway = state.audioMid * 4 * (i % 2 === 0 ? 1 : -1);
+//       el.style.transform       = `rotate(${sway}deg)`;
+//       el.style.transformOrigin = 'bottom center';
+//     }
+//   });
 
-  const flowers = document.getElementById('layer-flowers');
-  if (flowers) {
-    const pop = 1 + state.audioHigh * 0.15;
-    flowers.style.transform       = `scale(${pop})`;
-    flowers.style.transformOrigin = 'bottom center';
-  }
+//   const flowers = document.getElementById('layer-flowers');
+//   if (flowers) {
+//     const pop = 1 + state.audioHigh * 0.15;
+//     flowers.style.transform       = `scale(${pop})`;
+//     flowers.style.transformOrigin = 'bottom center';
+//   }
 
-  requestAnimationFrame(animateAudio);
-}
+//   requestAnimationFrame(animateAudio);
+// }
 
-window.addEventListener('scene-ready', () => {
-  animateAudio();
-});
+// window.addEventListener('scene-ready', () => {
+//   animateAudio();
+// });
 
 
 // ─────────────────────────────────────────────────────────────
