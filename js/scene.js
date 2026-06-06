@@ -57,6 +57,11 @@ const LAYERS = [
     day:   'Assets_Sun.svg',
     night: null },
 
+  // Moon at same depth as sun — sits behind hills and foreground
+  { id: 'moon',
+    day:   null,
+    night: 'Assets Night_Moon.svg' },
+
   { id: 'ocean',
     day:   'Assets_Ocean-1.svg',
     night: 'Assets Night_Ocean-1.svg' },
@@ -169,18 +174,16 @@ const LAYERS = [
     day:   'Assets_Foreground-hills 1.svg',
     night: 'Assets Night_Foreground-hills 1.svg' },
 
-  // Night-only layers
-  { id: 'moon',
+  // Night-only layers — order matters:
+  // dark-overlay darkens everything, moon appears over it,
+  // moon-reflection appears over both
+  { id: 'dark-overlay',
     day:   null,
-    night: 'Assets Night_Moon.svg' },
+    night: 'Assets Night_Dark overlay.svg' },
 
   { id: 'moon-reflection',
     day:   null,
     night: 'Assets Night_Moon-reflection-on-water.svg' },
-
-  { id: 'dark-overlay',
-    day:   null,
-    night: 'Assets Night_Dark overlay.svg' },
 
 ];
 
@@ -233,6 +236,7 @@ export async function buildScene(container) {
     wrapper.className = 'scene-layer';
     wrapper.style.zIndex    = i;
     wrapper.style.transform = `translate(${pos.x}px, ${pos.y}px)`;
+    wrapper.dataset.baseTransform = `translate(${pos.x}px, ${pos.y}px)`;
 
     // Day version — visible by default
     if (layer.day) {
@@ -274,6 +278,4 @@ export async function buildScene(container) {
 
     container.appendChild(wrapper);
   }
-
-  console.log('[scene.js] All layers loaded.');
 }
