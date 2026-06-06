@@ -66,6 +66,11 @@ let portalScale  = 1;  // scale needed to fill screen with no wall showing
 
 const origPos = {};
 
+function smoothstep(edge0, edge1, x) {
+  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+}
+
 // // Smooth easing curve — prevents snapping at transition edges
 // function smoothstep(edge0, edge1, x) {
 //   const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
@@ -110,10 +115,13 @@ window.addEventListener('scene-ready', () => {
   //   targetDepth = Math.max(0, Math.min(MAX_DEPTH, targetDepth - delta));
   // }, { passive: false });
 
-  // Scroll controls day/night
+// Scroll controls day/night loop
+let scrollProgress = 0;
+
 window.addEventListener('wheel', (e) => {
-  const delta = e.deltaY * 0.0005;
-  state.timeOfDay = Math.max(0, Math.min(1, state.timeOfDay + delta));
+  scrollProgress += e.deltaY * 0.0005;
+  // Use sine wave to create smooth loop: 0=day, 1=night, 2=day again
+  state.timeOfDay = (Math.sin(scrollProgress) + 1) / 2;
 });
 
 

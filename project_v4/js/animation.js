@@ -255,11 +255,24 @@ window.addEventListener('scene-ready', () => {
 
 function animateDayNight() {
   const t = state.timeOfDay;
+  
+  // Fade day/night layers
   document.querySelectorAll('.layer-day').forEach(el   => el.style.opacity = 1 - t);
   document.querySelectorAll('.layer-night').forEach(el => el.style.opacity = t);
+
+  // Sun moves down as day fades
+  const sun = document.getElementById('layer-sun');
+  if (sun) {
+    const sunY = t * 300; // moves 300px down as night approaches
+    sun.style.transform = `translateY(${sunY}px)`;
+  }
+
+  // Moon moves up as night comes
+  const moon = document.getElementById('layer-moon');
+  if (moon) {
+    const moonY = (1 - t) * 300; // starts 300px below, rises as night comes
+    moon.style.transform = `translateY(${moonY}px)`;
+  }
+
   requestAnimationFrame(animateDayNight);
 }
-
-window.addEventListener('scene-ready', () => {
-  animateDayNight();
-});
