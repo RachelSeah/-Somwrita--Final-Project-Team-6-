@@ -34,7 +34,7 @@
 // │  4. Use setTimeout for timed delays                     │
 // │                                                         │
 // │  TO GRAB A LAYER:                                       │
-// │  const el = document.getElementById('layer-cloud-1')   │
+// │  const el = document.getElementById('layer-cloud-1')    │
 // │  el.style.transform = 'translateX(100px)'               │
 // │                                                         │
 // │  AVAILABLE LAYER IDs:                                   │
@@ -51,12 +51,13 @@
 // │    .layer-night — hidden by default  (opacity: 0)       │
 // │                                                         │
 // │  BACKGROUND COLOURS:                                    │
-// │  Day:   #f8a779                                         │
-// │  Night: #b2b1ff                                         │
 // └─────────────────────────────────────────────────────────┘
 // ─────────────────────────────────────────────────────────────
 
 import { state } from './state.js';
+
+const SCENE_WIDTH  = 1455;
+const SCENE_HEIGHT = 1087;
 
 export function initTimeBased() {
 
@@ -65,15 +66,14 @@ export function initTimeBased() {
   // animateClouds();
   // startDayNightCycle();
   // initBirds();
+    animateClouds();
+    startDayNightCycle();
 
 }
 
 // ═════════════════════════════════════════════════════════════
 // PART 1 — CLOUD DRIFT
 // ─────────────────────────────────────────────────────────────
-// Paste your cloud animation code here.
-// ═════════════════════════════════════════════════════════════
-const SCENE_WIDTH = 1455;
 
 let cloud1X = 0;
 let cloud2X = -400;
@@ -103,12 +103,150 @@ function animateClouds() {
   requestAnimationFrame(animateClouds);
 }
 
-
 // ═════════════════════════════════════════════════════════════
 // PART 2 — DAY/NIGHT CYCLE
 // ─────────────────────────────────────────────────────────────
-// Paste your day/night cycle code here.
-// ═════════════════════════════════════════════════════════════
+const dayHoldDuration              = 30000;
+const dayToNightTransitionDuration = 10000;
+const nightHoldDuration            = 30000;
+const nightToDayTransitionDuration = 10000;
+const moonStartOpacityThreshold    = 0.8;
+const sunDayPosition               = 0;
+const sunSetPosition               = SCENE_HEIGHT * 0.7;
+const moonHiddenPosition           = SCENE_HEIGHT * 0.5;
+const moonNightPosition            = 0;
+const dayBackgroundColor           = { r: 248, g: 167, b: 121 };
+const nightBackgroundColor         = { r: 178, g: 177, b: 255 };
+
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+}
+function easeInOutSine(t) {
+  return -(Math.cos(Math.PI * t) - 1) / 2;
+}
+function lerp(a, b, t) { return a + (b - a) * t; }
+function lerpColor(c1, c2, t) {
+  return {
+    r: Math.round(lerp(c1.r, c2.r, t)),
+    g: Math.round(lerp(c1.g, c2.g, t)),
+    b: Math.round(lerp(c1.b, c2.b, t)),
+  };
+}
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+const STATES = {
+  DAY: 'day', DAY_TO_NIGHT: 'day_to_night',
+  NIGHT: 'night', NIGHT_TO_DAY: 'night_to_day',
+};
+let currentState = STATES.DAY;
+let stateStart   = null;
+
+function applySun(yOffset, opacity) {
+  const sun = document.getElementById('layer-sun');
+  if (!sun) return;
+  const base = sun.dataset.baseTransform || 'translate(0px, 0px)';
+  sun.style.transform = `${base} translateY(${yOffset}px)`;
+  sun.style.opacity   = String(clamp(opacity, 0, 1));
+}
+function applyMoon(yOffset, opacity) {
+  const moon = document.getElementById('layer-moon');
+  if (!moon) return;
+  const base = moon.dataset.baseTransform || 'translate(0px, 0px)';
+  moon.style.transform = `${base} translateY(${yOffset}px)`;
+  moon.style.opacity   = String(clamp(opacity, 0, 1));
+  const inner = moon.querySelector('.layer-night');
+  if (inner) inner.style.opacity = '1';
+}
+function applyNightOpacity(opacity) {
+  document.querySelectorAll('.layer-night').forEach(el => {
+    if (el.closest('#layer-moon')) return;
+    el.style.opacity = String(clamp(opacity, 0, 1));
+  });
+  document.querySelectorAll('.layer-day').forEach(el => {
+    el.style.opacity = String(clamp(1 - opacity, 0, 1));
+  });
+}
+function applyBackground(t) {
+  const col = lerpColor(dayBackgroundColor, nightBackgroundColor, clamp(t, 0, 1));
+  const scene = document.getElementById('scene');
+  if (scene) scene.style.background = `rgb(${col.r},${col.g},${col.b})`;
+}
+
+function tickDay(elapsed) {
+  const idleY = Math.sin((elapsed / 6000) * Math.PI * 2) * 4;
+  applySun(sunDayPosition + idleY, 1);
+  applyMoon(moonHiddenPosition, 0);
+  applyNightOpacity(0);
+  applyBackground(0);
+  state.isDay = true;
+}
+function tickDayToNight(elapsed) {
+  const t     = clamp(elapsed / dayToNightTransitionDuration, 0, 1);
+  const eased = easeInOutCubic(t);
+  applySun(lerp(sunDayPosition, sunSetPosition, eased), lerp(1, 0, easeInOutSine(t)));
+  applyNightOpacity(eased);
+  applyBackground(eased);
+  const moonProgress = clamp((eased - moonStartOpacityThreshold) / (1 - moonStartOpacityThreshold), 0, 1);
+  applyMoon(lerp(moonHiddenPosition, moonNightPosition, easeInOutSine(moonProgress)), moonProgress);
+  state.isDay = false;
+}
+function tickNight(elapsed) {
+  const idleY = Math.sin((elapsed / 7000) * Math.PI * 2) * 3;
+  applyMoon(moonNightPosition + idleY, 1);
+  applySun(sunSetPosition, 0);
+  applyNightOpacity(1);
+  applyBackground(1);
+  state.isDay = false;
+}
+function tickNightToDay(elapsed) {
+  const t     = clamp(elapsed / nightToDayTransitionDuration, 0, 1);
+  const eased = easeInOutCubic(t);
+  applyNightOpacity(1 - eased);
+  applyBackground(1 - eased);
+  applyMoon(lerp(moonNightPosition, moonHiddenPosition, easeInOutSine(t)), lerp(1, 0, eased));
+  applySun(lerp(sunSetPosition, sunDayPosition, easeInOutSine(t)), lerp(0, 1, easeInOutSine(t)));
+  state.isDay = t > 0.5;
+}
+
+function mainLoop(timestamp) {
+  if (!stateStart) stateStart = timestamp;
+  const elapsed = timestamp - stateStart;
+  switch (currentState) {
+    case STATES.DAY:
+      tickDay(elapsed);
+      if (elapsed >= dayHoldDuration) { currentState = STATES.DAY_TO_NIGHT; stateStart = timestamp; }
+      break;
+    case STATES.DAY_TO_NIGHT:
+      tickDayToNight(elapsed);
+      if (elapsed >= dayToNightTransitionDuration) {
+        applyNightOpacity(1); applyBackground(1);
+        applySun(sunSetPosition, 0); applyMoon(moonNightPosition, 1);
+        currentState = STATES.NIGHT; stateStart = timestamp;
+      }
+      break;
+    case STATES.NIGHT:
+      tickNight(elapsed);
+      if (elapsed >= nightHoldDuration) { currentState = STATES.NIGHT_TO_DAY; stateStart = timestamp; }
+      break;
+    case STATES.NIGHT_TO_DAY:
+      tickNightToDay(elapsed);
+      if (elapsed >= nightToDayTransitionDuration) {
+        applyNightOpacity(0); applyBackground(0);
+        applySun(sunDayPosition, 1); applyMoon(moonHiddenPosition, 0);
+        currentState = STATES.DAY; stateStart = timestamp;
+      }
+      break;
+  }
+  requestAnimationFrame(mainLoop);
+}
+
+function startDayNightCycle() {
+  applyNightOpacity(0);
+  applyBackground(0);
+  applySun(sunDayPosition, 1);
+  applyMoon(moonHiddenPosition, 0);
+  requestAnimationFrame(mainLoop);
+}
 
 
 
