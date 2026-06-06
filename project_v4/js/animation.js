@@ -247,3 +247,19 @@ function animateAudio() {
 window.addEventListener('scene-ready', () => {
   animateAudio();
 });
+
+
+// ─────────────────────────────────────────────────────────────
+// day and night crossfade
+// ─────────────────────────────────────────────────────────────
+
+function animateDayNight() {
+  const t = state.timeOfDay;
+  document.querySelectorAll('.layer-day').forEach(el   => el.style.opacity = 1 - t);
+  document.querySelectorAll('.layer-night').forEach(el => el.style.opacity = t);
+  requestAnimationFrame(animateDayNight);
+}
+
+window.addEventListener('scene-ready', () => {
+  animateDayNight();
+});

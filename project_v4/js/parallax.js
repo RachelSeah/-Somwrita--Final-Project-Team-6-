@@ -51,6 +51,8 @@ const DEPTHS = {
   'dark-overlay':    0.00,
 };
 
+import { state } from './state.js';
+
 const SCENE_W   = 1455;
 const SCENE_H   = 1087;
 const MAX_SCALE = 3.2;
@@ -64,11 +66,11 @@ let portalScale  = 1;  // scale needed to fill screen with no wall showing
 
 const origPos = {};
 
-// Smooth easing curve — prevents snapping at transition edges
-function smoothstep(edge0, edge1, x) {
-  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
-  return t * t * (3 - 2 * t);
-}
+// // Smooth easing curve — prevents snapping at transition edges
+// function smoothstep(edge0, edge1, x) {
+//   const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+//   return t * t * (3 - 2 * t);
+// }
 
 window.addEventListener('scene-ready', () => {
   const scene     = document.getElementById('scene');
@@ -100,13 +102,20 @@ window.addEventListener('scene-ready', () => {
     origPos[id] = { x: m ? parseFloat(m[1]) : 0, y: m ? parseFloat(m[2]) : 0 };
   });
 
-  // ── Input: scroll to fly in/out ────────────────────────────────────────────
-  // Works with: mouse scroll wheel, two-finger trackpad, pinch gesture (ctrl+wheel)
-  scene.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    const delta = e.ctrlKey ? e.deltaY * 0.008 : e.deltaY * 0.003;
-    targetDepth = Math.max(0, Math.min(MAX_DEPTH, targetDepth - delta));
-  }, { passive: false });
+  // // ── Input: scroll to fly in/out ────────────────────────────────────────────
+  // // Works with: mouse scroll wheel, two-finger trackpad, pinch gesture (ctrl+wheel)
+  // scene.addEventListener('wheel', (e) => {
+  //   e.preventDefault();
+  //   const delta = e.ctrlKey ? e.deltaY * 0.008 : e.deltaY * 0.003;
+  //   targetDepth = Math.max(0, Math.min(MAX_DEPTH, targetDepth - delta));
+  // }, { passive: false });
+
+  // Scroll controls day/night
+window.addEventListener('wheel', (e) => {
+  const delta = e.deltaY * 0.0005;
+  state.timeOfDay = Math.max(0, Math.min(1, state.timeOfDay + delta));
+});
+
 
   // ── Input: mouse position = vanishing point (where you fly toward) ─────────
   document.addEventListener('mousemove', (e) => {

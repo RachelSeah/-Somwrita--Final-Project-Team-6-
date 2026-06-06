@@ -1,50 +1,75 @@
-// js/sound.js by Nishant
+// js/sound.js — Nishant
 import { state } from './state.js';
 
-let gainNode;  // ← add this
+let dayGain, nightGain, ctx;
 
 window.addEventListener('scene-ready', () => {
   document.addEventListener('click', startAudio, { once: true });
 });
 
 async function startAudio() {
-  const ctx      = new AudioContext();
+  ctx            = new AudioContext();
+  dayGain        = ctx.createGain();
+  nightGain      = ctx.createGain();
+  dayGain.gain.value   = 1;
+  nightGain.gain.value = 0;
+
+  dayGain.connect(ctx.destination);
+  nightGain.connect(ctx.destination);
+
+  const [dayBuffer, nightBuffer] = await Promise.all([
+    loadBuffer(ctx, 'assets/sound/ambient.mp3'),
+    loadBuffer(ctx, 'assets/sound/night.mp3'),
+  ]);
+
+  const daySource   = ctx.createBufferSource();
+  const nightSource = ctx.createBufferSource();
+  daySource.buffer   = dayBuffer;
+  nightSource.buffer = nightBuffer;
+  daySource.loop     = true;
+  nightSource.loop   = true;
+  daySource.connect(dayGain);
+  nightSource.connect(nightGain);
+  daySource.start();
+  nightSource.start();
+
   const analyser = ctx.createAnalyser();
   analyser.fftSize = 256;
-  gainNode = ctx.createGain();  // ← add this
-
-  const response    = await fetch('assets/sound/ambient.mp3');
-  const arrayBuffer = await response.arrayBuffer();
-  const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-
-  const source  = ctx.createBufferSource();
-  source.buffer = audioBuffer;
-  source.loop   = true;
-  source.connect(analyser);
-  analyser.connect(gainNode);       // ← changed
-  gainNode.connect(ctx.destination); // ← changed
-  source.start();
-
+  daySource.connect(analyser);
   const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
   function analyse() {
     analyser.getByteFrequencyData(dataArray);
     state.audioBass  = average(dataArray, 0, 10)   / 255;
     state.audioMid   = average(dataArray, 10, 60)  / 255;
     state.audioHigh  = average(dataArray, 60, 128) / 255;
     state.audioLevel = average(dataArray, 0, 128)  / 255;
+
+    // Crossfade sounds with timeOfDay
+    dayGain.gain.value   = 1 - state.timeOfDay;
+    nightGain.gain.value = state.timeOfDay;
+
     requestAnimationFrame(analyse);
   }
   analyse();
 }
 
-// ← add this function
 window.toggleMute = function() {
-  if (!gainNode) return;
-  const muted = gainNode.gain.value === 0;
-  gainNode.gain.value = muted ? 1 : 0;
-  state.isMuted = !muted;
-  document.getElementById('mute-btn').textContent = muted ? '🔊' : '🔇';
+  if (!ctx) return;
+  if (ctx.state === 'suspended') {
+    ctx.resume();
+    document.getElementById('mute-btn').textContent = '🔊';
+  } else {
+    ctx.suspend();
+    document.getElementById('mute-btn').textContent = '🔇';
+  }
 };
+
+async function loadBuffer(ctx, url) {
+  const res    = await fetch(url);
+  const buffer = await res.arrayBuffer();
+  return ctx.decodeAudioData(buffer);
+}
 
 function average(arr, start, end) {
   let sum = 0;
