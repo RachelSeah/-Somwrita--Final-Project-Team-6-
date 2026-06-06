@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Node (if anyone adds a package.json later)
+node_modules/
+npm-debug.log*
+
+# Misc
+*.log
+.env
