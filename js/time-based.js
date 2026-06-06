@@ -73,7 +73,35 @@ export function initTimeBased() {
 // ─────────────────────────────────────────────────────────────
 // Paste your cloud animation code here.
 // ═════════════════════════════════════════════════════════════
+const SCENE_WIDTH = 1455;
 
+let cloud1X = 0;
+let cloud2X = -400;
+let cloud3X = -800;
+
+const CLOUD1_SPEED = 0.4;
+const CLOUD2_SPEED = 0.25;
+const CLOUD3_SPEED = 0.15;
+
+function animateClouds() {
+  const c1 = document.getElementById('layer-cloud-1');
+  const c2 = document.getElementById('layer-cloud-2');
+  const c3 = document.getElementById('layer-cloud-3');
+
+  cloud1X += CLOUD1_SPEED;
+  cloud2X += CLOUD2_SPEED;
+  cloud3X += CLOUD3_SPEED;
+
+  if (cloud1X > SCENE_WIDTH + 200) cloud1X = -400;
+  if (cloud2X > SCENE_WIDTH + 200) cloud2X = -400;
+  if (cloud3X > SCENE_WIDTH + 200) cloud3X = -400;
+
+  if (c1) c1.style.transform = `translateX(${cloud1X}px)`;
+  if (c2) c2.style.transform = `translateX(${cloud2X}px)`;
+  if (c3) c3.style.transform = `translateX(${cloud3X}px)`;
+
+  requestAnimationFrame(animateClouds);
+}
 
 
 // ═════════════════════════════════════════════════════════════
