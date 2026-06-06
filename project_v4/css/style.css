@@ -1,0 +1,246 @@
+/* css/style.css */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #d9d0c3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Gallery wall ────────────────────────────────────────── */
+#gallery {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  /* Warm plaster wall base colour */
+  background-color: #d9d0c3;
+
+  /* Spotlight from above + edge vignette — like a real gallery */
+  background-image:
+    radial-gradient(ellipse 70% 55% at 50% 30%,
+      rgba(255, 245, 220, 0.45) 0%,
+      transparent 70%),
+    radial-gradient(ellipse at center,
+      transparent 45%,
+      rgba(0, 0, 0, 0.18) 100%);
+}
+
+/* Wall grain texture — linen weave pattern */
+/* Creates barely-visible horizontal + vertical thread lines like woven fabric */
+/* Much more tactile than pure noise, but still very quiet behind the painting */
+#gallery::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    /* Horizontal threads */
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px, transparent 3px,
+      rgba(120, 100, 75, 0.07) 3px, rgba(120, 100, 75, 0.07) 4px
+    ),
+    /* Vertical threads */
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px, transparent 3px,
+      rgba(120, 100, 75, 0.05) 3px, rgba(120, 100, 75, 0.05) 4px
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Subtle skirting board at bottom */
+#gallery::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 28px;
+  background: linear-gradient(to bottom, #c4bab0, #b8ada2);
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* ── Hanging wire ────────────────────────────────────────── */
+#wire {
+  width: 160px;
+  height: 14px;
+  position: relative;
+  margin-bottom: -1px;
+  z-index: 1;
+}
+
+/* ── Frame wrap (JS scales this to fit screen) ───────────── */
+#frame-wrap {
+  transform-origin: center center;
+  z-index: 1;
+}
+
+/* ── Outer wooden frame ──────────────────────────────────── */
+#frame {
+  position: relative;
+  padding: 16px;
+  background: #5c3d1e;
+  box-shadow:
+    inset 2px 2px 0px #7a5230,
+    inset -2px -2px 0px #3d2610,
+    /* Main drop shadow */
+    6px 12px 40px rgba(0, 0, 0, 0.45),
+    /* Subtle glow from gallery spotlight above */
+    0 -2px 20px rgba(255, 230, 180, 0.12);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+/* Inner bevel on frame */
+#frame::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 2px solid #3d2610;
+  box-shadow: inset 1px 1px 0 #7a5230;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ── Artwork canvas ──────────────────────────────────────── */
+#scene {
+  position: relative;
+  width: 1455px;
+  height: 1087px;
+  overflow: hidden;
+  display: block;
+  clip-path: inset(0);
+}
+
+/* ── Scene layers ────────────────────────────────────────── */
+.scene-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.scene-layer.interactive {
+  pointer-events: auto;
+}
+
+.layer-day,
+.layer-night {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.layer-day object,
+.layer-night object {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── Gallery label below frame ───────────────────────────── */
+#label {
+  margin-top: 18px;
+  background: #f0ebe4;
+  border: 0.5px solid #c0b8ac;
+  border-radius: 2px;
+  padding: 8px 20px 10px;
+  text-align: center;
+  line-height: 1.5;
+  z-index: 1;
+  /* Label casts a tiny shadow like a real museum card */
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+#label .title {
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 13px;
+  color: #444;
+  display: block;
+}
+
+#label .meta {
+  font-family: Georgia, serif;
+  font-size: 11px;
+  color: #888;
+  display: block;
+}
+
+/* ── p5 canvas overlay ───────────────────────────────────── */
+#p5-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+/* ── Portal immersion transitions ────────────────────────────────────────── */
+/* Smooth all frame/wall fades */
+#frame {
+  transition: padding 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+#wire, #label {
+  transition: opacity 0.35s ease;
+}
+#gallery {
+  transition: background-color 0.4s ease;
+}
+/* Fade the linen texture and baseboard when entering the painting */
+#gallery.inside::before,
+#gallery.inside::after {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+/* Fade the frame inner bevel when entering */
+#frame.inside::before {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+#label-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#mute-btn {
+  position: static;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin-top: 18px; 
+  border: none;
+  background: rgba(255,255,255,0.75);
+  font-size: 30px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  backdrop-filter: blur(4px);
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+#mute-btn:hover {
+  background: rgba(255,255,255,0.95);
+}
