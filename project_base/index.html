@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Karma</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+</head>
+<body>
+
+<div id="gallery">
+  <svg id="wire" viewBox="0 0 120 12" xmlns="http://www.w3.org/2000/svg">
+    <path d="M8 10 Q60 2 112 10" fill="none" stroke="#aaa" stroke-width="1"/>
+    <circle cx="60" cy="2" r="2.5" fill="#aaa"/>
+  </svg>
+
+  <div id="frame-wrap">
+    <div id="frame">
+      <div id="scene"></div>
+    </div>
+  </div>
+
+  <div id="label">
+    <span class="title">Karma</span>
+    <span class="meta">Interactive, 2026 &nbsp;·&nbsp; SVG, HTML, JS</span>
+  </div>
+</div>
+
+<script type="module" src="./js/sketch.js"></script>
+
+<script>
+  function scaleFrame() {
+    const wrap   = document.getElementById('frame-wrap');
+    const label  = document.getElementById('label');
+    const wire   = document.getElementById('wire');
+    if (!wrap || !label || !wire) return;
+
+    const frameW = 1455 + 32;
+    const frameH = 1087 + 32;
+    const labelH = label.offsetHeight + 14;
+    const wireH  = wire.offsetHeight + 4;
+    const gap    = 80;
+
+    const availW = window.innerWidth  - gap * 2;
+    const availH = window.innerHeight - labelH - wireH - gap * 2 - 24;
+    const scale  = Math.min(availW / frameW, availH / frameH);
+
+    wrap.style.transform       = `scale(${scale})`;
+    wrap.style.transformOrigin = 'center top';
+
+    const scaledH = frameH * scale;
+    const totalH  = wireH + scaledH + labelH;
+    const topPad  = Math.max(20, (window.innerHeight - totalH - 24) / 2);
+    document.getElementById('gallery').style.paddingTop = topPad + 'px';
+  }
+
+  setTimeout(scaleFrame, 200);
+  window.addEventListener('resize', scaleFrame);
+</script>
+
+</body>
+</html>
