@@ -200,6 +200,25 @@ window.addEventListener('wheel', (e) => {
         `${orig.y + zoomTY + lookY}px) scale(${s})`;
     });
 
+    // Sun sinks into water as night comes
+    const sunEl = document.getElementById('layer-sun');
+    if (sunEl) {
+      const orig = origPos['sun'] || { x: 0, y: 0 };
+      const sunY = state.timeOfDay * 400;
+      sunEl.style.transform = `translate(${orig.x}px, ${orig.y + sunY}px)`;
+      sunEl.style.zIndex = '1'; // behind water
+    }
+
+    // Moon rises from water as night comes
+    const moonEl = document.getElementById('layer-moon');
+    if (moonEl) {
+      const orig = origPos['moon'] || { x: 0, y: 0 };
+      const moonY = (1 - state.timeOfDay) * 400;
+      moonEl.style.transform = `translate(${orig.x}px, ${orig.y + moonY}px)`;
+      moonEl.style.zIndex = '1'; // behind water
+    }
+
+    
     requestAnimationFrame(tick);
   }
   tick();
