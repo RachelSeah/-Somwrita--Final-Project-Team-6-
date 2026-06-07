@@ -30,7 +30,7 @@
 // Loaded in preloadSounds(), configured in setupSounds().
 let _sndDay      = null;   // ambient_day.wav      — daytime birdsong (looping)
 let _sndRain     = null;   // ambient_rain.wav     — rain/river sound (looping)
-let _sndNight    = null;  // ambient_collapse.mp3 — collapse drone    (looping)
+let _sndCollapse = null;   // ambient_collapse.mp3 — collapse drone    (looping)
 
 
 // ── INTERNAL STATE ────────────────────────────────────────────────────────────
@@ -52,14 +52,14 @@ const FADE_TIME    = 1.5;   // crossfade duration in seconds — smooth, not abr
 // try/catch means a missing file logs a warning but never crashes the sketch.
 // =============================================================================
 function preloadSounds() {
-  try { _sndDay   = loadSound('assets/audio/ambient.mp3'); }
-catch(e) { console.warn('[sound.js] Could not load ambient.mp3'); }
+  try { _sndDay      = loadSound('assets/audio/ambient_day.wav'); }
+  catch(e) { console.warn('[sound.js] Could not load ambient_day.wav'); }
 
-try { _sndRain  = loadSound('assets/audio/ambient_rain.mp3'); }
-catch(e) { console.warn('[sound.js] Could not load ambient_rain.mp3'); }
+  try { _sndRain     = loadSound('assets/audio/ambient_rain.wav'); }
+  catch(e) { console.warn('[sound.js] Could not load ambient_rain.wav'); }
 
-try { _sndNight = loadSound('assets/audio/night.mp3'); }
-catch(e) { console.warn('[sound.js] Could not load night.mp3'); }
+  try { _sndCollapse = loadSound('assets/audio/ambient_collapse.mp3'); }
+  catch(e) { console.warn('[sound.js] Could not load ambient_collapse.mp3'); }
 }
 
 
@@ -182,8 +182,8 @@ function updateSound() {
   let key;
   if (STATE.rainActive) {
     key = 'rain';                              // rain overrides everything
-  } else if (STATE.currentState === 'FIREFLIES') {
-    key = 'night';
+  } else if (STATE.currentState === 'COLLAPSE') {
+    key = 'collapse';
   } else if (STATE.currentState === 'PASSIVE') {
     key = 'day';
   } else {
