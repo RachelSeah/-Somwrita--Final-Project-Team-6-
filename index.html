@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Karma</title>
+
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+    <!-- p5.js libraries -->
+    <script src="libraries/p5.min.js"></script>
+    <script src="libraries/p5.sound.min.js"></script>
+
+    <!-- Our JS files — ORDER MATTERS, do not change -->
+    <script src="js/layers.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/scene.js"></script>
+    <script src="js/noise.js"></script>
+    <script src="js/time.js"></script>
+    <script src="js/user_interaction.js"></script>
+    <script src="js/sound.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Wooden frame wraps the artwork -->
+    <div id="frame">
+      <!-- scene-container holds both the SVG DOM scene and the p5 canvas overlay -->
+      <div id="scene-container">
+        <div id="scene"></div>
+        <!-- p5 canvas is appended here by sketch.js setup() -->
+      </div>
+    </div>
+
+    <script>
+      // Build SVG scene into the DOM before sketch.js starts animating.
+      // Sets window._sceneReady = true when all SVGs are loaded.
+      // sketch.js draw() checks this flag before running.
+      window._sceneReady = false;
+      buildScene(document.getElementById('scene')).then(() => {
+        window._sceneReady = true;
+      });
+    </script>
+
+    <!-- sketch.js loaded last — uses everything above -->
+    <script src="sketch.js"></script>
+
+  </body>
+</html>

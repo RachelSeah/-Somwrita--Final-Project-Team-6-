@@ -1,0 +1,96 @@
+/* style.css */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100vw;
+  height: 100vh;
+  background: #e8e4de;  /* neutral beige — gallery wall colour */
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Wooden frame ─────────────────────────────────────────── */
+#frame {
+  position: relative;
+  padding: 20px;
+  background: #5c3d1e;              /* dark wood brown */
+  box-shadow:
+    inset  2px  2px 0px #7a5230,   /* top-left light bevel */
+    inset -2px -2px 0px #3d2610,   /* bottom-right dark bevel */
+    6px 10px 32px rgba(0,0,0,0.4); /* drop shadow on wall */
+  border-radius: 2px;
+}
+
+/* Inner gold bevel line */
+#frame::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 2px solid #3d2610;
+  box-shadow: inset 1px 1px 0 #7a5230;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Container holds both the SVG DOM scene and the p5 canvas overlay */
+#scene-container {
+  position: relative;
+  width: 1455px;
+  height: 1087px;
+}
+
+/* The SVG scene — all SVG layers live inside here */
+#scene {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1455px;
+  height: 1087px;
+  overflow: hidden;
+}
+
+/* Each layer div stacks absolutely on top of previous */
+.scene-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Day and night version containers */
+.layer-day,
+.layer-night {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* SVGs fill their container */
+.layer-day svg,
+.layer-night svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* p5 canvas — transparent overlay positioned exactly over the scene.
+   z-index must be higher than all SVG layers (which go from 0 to ~33)
+   so that rain, fireflies, and spawned flowers always appear on top. */
+#scene-container canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  pointer-events: auto;
+}
