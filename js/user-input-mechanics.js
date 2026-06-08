@@ -346,6 +346,9 @@ function keyPressed() {
 // All styles share the same grow/fade lifecycle and state-driven tinting.
 function spawnFlower(x, y, sizeMult = 1.0) {
 
+  // for pop flower sound
+  if (typeof playFlowerPop === 'function') playFlowerPop(); 
+
   // Pick style — rarer styles appear less often
   let roll  = random(1);
   let style = roll < 0.60 ? 0 : roll < 0.85 ? 1 : 2;
