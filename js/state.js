@@ -135,10 +135,13 @@ function subtractHealth(amount = HEALTH_PER_BAD) {
 // Sets _collapseTintTarget — the actual STATE.collapseTint moves toward it
 // gradually via updateCollapseTint() each frame (smooth transition).
 function updateStateFromHealth() {
-
-  // Target tint: 0 at health 50+, ramps up as health drops below 50
-  // map(value, fromLow, fromHigh, toLow, toHigh) — p5's range remapping function
   _collapseTintTarget = constrain(map(STATE.health, 50, 0, 0, 1), 0, 1);
+
+  // When recovering from COLLAPSE by growing flowers, return to PASSIVE
+  // once health climbs back to 30 so the day sound resumes
+  if (STATE.currentState === 'COLLAPSE' && STATE.health >= 30) {
+    STATE.currentState = 'PASSIVE';
+  }
 
   // Fireflies are NOT triggered by health — they are triggered by
   // flower click count reaching FLOWER_CLICK_THRESHOLD in user_interaction.js
