@@ -27,6 +27,9 @@ const nativeH = 1087;
 // pg — offscreen buffer for rain, fireflies, flowers (composited onto main canvas)
 let pg;
 
+let _parallaxX = 0;   // smoothed mouse parallax offset X
+let _parallaxY = 0;   // smoothed mouse parallax offset Y
+
 
 
 // =============================================================================
@@ -60,7 +63,7 @@ function setup() {
 
   // intialise set up for birds
   if (typeof initBirds === 'function') initBirds();
-} 
+}
 
 
 // =============================================================================
@@ -85,12 +88,13 @@ function draw() {
   // ── 2. UPDATE STATE ─────────────────────────────────────────────────────────
   STATE.noiseT += 0.005;
 
-  if (typeof updateClouds          === 'function') updateClouds();
-  if (typeof updateDayNight        === 'function') updateDayNight();
-  if (typeof updateCollapseTint    === 'function') updateCollapseTint();
-  if (typeof updateNoise           === 'function') updateNoise();
-  if (typeof updateSound           === 'function') updateSound();
-
+  if (typeof updateClouds === 'function') updateClouds();
+  if (typeof updateDayNight === 'function') updateDayNight();
+  if (typeof updateCollapseTint === 'function') updateCollapseTint();
+  if (typeof updateNoise === 'function') updateNoise();
+  if (typeof updateSound === 'function') updateSound();
+  _parallaxX = lerp(_parallaxX, map(mouseX, 0, nativeW, -1, 1), 0.05);
+  _parallaxY = lerp(_parallaxY, map(mouseY, 0, nativeH, -1, 1), 0.05);
   // ── 3. APPLY CSS TO DOM LAYERS ──────────────────────────────────────────────
   // SVGs are in the DOM — we animate them via CSS, not by redrawing
 
@@ -121,7 +125,7 @@ function draw() {
   if (fOpacity > 0) drawFireflies(fOpacity);
 
   if (typeof drawSpawnedFlowers === 'function') drawSpawnedFlowers();
-  if (typeof drawSpawnedBirds   === 'function') drawSpawnedBirds();
+  if (typeof drawSpawnedBirds === 'function') drawSpawnedBirds();
 
   // ── 5. RENDER pg ONTO TRANSPARENT MAIN CANVAS ───────────────────────────────
   // clear() makes the main canvas fully transparent so the DOM scene shows through
@@ -144,14 +148,15 @@ function draw() {
 // =============================================================================
 function updateLayerTransforms() {
 
-  for (let layer of LAYERS) {
+  for (let i = 0; i < LAYERS.length; i++) {
+    let layer = LAYERS[i];
 
     let isCloud = STATE.cloudOffsets && STATE.cloudOffsets[layer.id] !== undefined;
-    let isSun   = layer.id === 'sun';
+    let isSun = layer.id === 'sun';
     let hasSway = layer.sway;
 
     // Skip layers that never move — no need to set their transform each frame
-if (!isCloud && !isSun && !hasSway && layer.id !== 'ocean') continue;
+    if (!isCloud && !isSun && !hasSway && layer.id !== 'ocean') continue;
 
     let el = document.getElementById('layer-' + layer.id);
     if (!el) continue;
@@ -174,8 +179,13 @@ if (!isCloud && !isSun && !hasSway && layer.id !== 'ocean') continue;
       dy += getSunRiseOffset();
     }
 
-if (layer.id === 'ocean') dx += sin(frameCount * 0.01) * 25;
-el.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';  }
+    if (layer.id === 'ocean') dx += sin(frameCount * 0.01) * 25;
+    // Background layers (low i) move less, foreground (high i) move more
+    let depth = i / (LAYERS.length - 1);
+    dx += _parallaxX * map(depth, 0, 1, 2, 12);
+    dy += _parallaxY * map(depth, 0, 1, 1, 15);
+    el.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+  }
 }
 
 
@@ -190,10 +200,10 @@ function updateDayNightCSS() {
     let el = document.getElementById('layer-' + layer.id);
     if (!el) continue;
 
-    let dayEl   = el.querySelector('.layer-day');
+    let dayEl = el.querySelector('.layer-day');
     let nightEl = el.querySelector('.layer-night');
 
-    if (dayEl)   dayEl.style.opacity   = (1 - STATE.dayNight);
+    if (dayEl) dayEl.style.opacity = (1 - STATE.dayNight);
 
     if (nightEl) {
       // Cap the dark overlay at 0.5 so it darkens without flattening all detail.
@@ -238,35 +248,35 @@ function updateNightColorCSS() {
   // Background = darker, midground = medium, foreground = brighter.
   // Clouds boosted so they stay readable against dark sky.
   const nightBrightness = {
-    'sky':        55,   // darkest — deep background
-    'ocean':      70,   // dark water
-    'mountain':   65,   // dark but slightly lighter than sky
-    'island':     75,
-    'cloud-1':    160,  // clouds boosted — semi-transparent SVGs need this
-    'cloud-2':    155,
-    'cloud-3':    150,
-    'hills-7':    72,
-    'hills-8':    72,
-    'hills-6':    76,
-    'hills-4':    78,
-    'tree-8':     85,
-    'bush-2':     88,
-    'hills-5':    80,
-    'tree-bush':  90,
-    'tree-4':     88,
-    'tree-6':     88,
-    'hills-3':    82,
-    'tree-7':     90,
-    'tree-5':     90,
-    'tree-2':     92,
-    'bush-1':     90,
-    'tree-1':     95,   // foreground trees — brightest vegetation
-    'tree-3':     95,
-    'bush-3':     92,
-    'hills-2':    85,
-    'flowers':    100,
+    'sky': 55,   // darkest — deep background
+    'ocean': 70,   // dark water
+    'mountain': 65,   // dark but slightly lighter than sky
+    'island': 75,
+    'cloud-1': 160,  // clouds boosted — semi-transparent SVGs need this
+    'cloud-2': 155,
+    'cloud-3': 150,
+    'hills-7': 72,
+    'hills-8': 72,
+    'hills-6': 76,
+    'hills-4': 78,
+    'tree-8': 85,
+    'bush-2': 88,
+    'hills-5': 80,
+    'tree-bush': 90,
+    'tree-4': 88,
+    'tree-6': 88,
+    'hills-3': 82,
+    'tree-7': 90,
+    'tree-5': 90,
+    'tree-2': 92,
+    'bush-1': 90,
+    'tree-1': 95,   // foreground trees — brightest vegetation
+    'tree-3': 95,
+    'bush-3': 92,
+    'hills-2': 85,
+    'flowers': 100,
     'first-hill': 88,
-    'hills-1':    90,   // closest foreground — most visible
+    'hills-1': 90,   // closest foreground — most visible
   };
 
   for (let id in nightBrightness) {
@@ -313,16 +323,16 @@ function updateTintCSS() {
 
     if (layer.tintGroup === 'sky') {
       let brightness = Math.round(lerp(100, 40, t));
-      let saturate   = Math.round(lerp(100, 30, t));
+      let saturate = Math.round(lerp(100, 30, t));
       f = 'brightness(' + brightness + '%) saturate(' + saturate + '%)';
 
     } else if (layer.tintGroup === 'vegetation') {
-      let sepia      = Math.round(lerp(0,   60, t));
+      let sepia = Math.round(lerp(0, 60, t));
       let brightness = Math.round(lerp(100, 65, t));
       f = 'sepia(' + sepia + '%) brightness(' + brightness + '%)';
 
     } else if (layer.tintGroup === 'water') {
-      let sepia      = Math.round(lerp(0,   50, t));
+      let sepia = Math.round(lerp(0, 50, t));
       let brightness = Math.round(lerp(100, 55, t));
       f = 'sepia(' + sepia + '%) brightness(' + brightness + '%)';
     }
@@ -402,7 +412,7 @@ function drawRain(globalOpacity = 1.0) {
     let b = lerp(255, 248, p.weight);
 
     let baseOpacity = lerp(55, 195, p.weight);
-    let alpha       = (p.opacity / 220) * baseOpacity * opacMult * globalOpacity;
+    let alpha = (p.opacity / 220) * baseOpacity * opacMult * globalOpacity;
 
     // Horizon fade — BG drops dissolve as y approaches 440 (horizon line).
     // Two BG layers each fade over different ranges, creating a layered dissolve.
@@ -416,7 +426,7 @@ function drawRain(globalOpacity = 1.0) {
     }
 
     let dropLen = p.len;
-    let dropW   = lerp(1.2, 3.8, p.weight) * p.depthScale;
+    let dropW = lerp(1.2, 3.8, p.weight) * p.depthScale;
 
     // Centre the drop midway along its fall trajectory
     let cx = p.x + cos(p.angle) * dropLen * 0.5;
