@@ -142,3 +142,109 @@ function getSunRiseOffset() {
 
   return offsetY;
 }
+
+// =============================================================================
+// PART 4 — BIRD ANIMATION
+// =============================================================================
+// Adapted from an original p5.js sketch by Patt Vira:
+// https://www.youtube.com/watch?v=ttz05d8DSOs
+// The original mechanic design is Patt Vira's.
+//
+// HOW IT WORKS:
+//   Each bird is an object with position, angle, velocity, and flap values.
+//   updateBirds() is called every frame from sketch.js draw().
+//   It moves each bird forward along its angle, increments its flap cycle,
+//   then draws it as a triangle (wings) + ellipse (body) on the p5 canvas.
+//   When a bird exits the right edge it resets to a new random position on
+//   the left so the flock never disappears.
+//
+//   The wing tip point (p2) oscillates using sin(flap) which creates the
+//   flapping motion without any complex physics.
+//
+//   Birds only draw during daytime (STATE.dayNight < 0.8) so they
+//   naturally disappear as the scene transitions to night.
+//
+// p5.js functions used:
+//   createVector(), p5.Vector.fromAngle(), random(), sin(), map(),
+//   noStroke(), fill(), ellipse(), triangle(), PI, TWO_PI
+// =============================================================================
+
+const BIRDS_NUMBER = 6;
+let _birds = [];
+let _birdsReady = false;
+
+// Call this once from sketch.js setup() after p5 is initialised
+function initBirds() {
+  _birds = [];
+  for (let i = 0; i < BIRDS_NUMBER; i++) {
+    _birds.push(new BirdC());
+  }
+  _birdsReady = true;
+}
+
+// Bird class — each instance is one bird in the flock
+function BirdC() {
+  this.pos = createVector(
+  random(width * 0.2, width * 1.2),
+  random(height * 0.05, height * 0.25)
+)
+  this.angle = random(TWO_PI * 0.97, TWO_PI * 1.03);
+  this.vel   = random(0.8, 1.5);
+  this.flap  = random(0, TWO_PI);
+}
+
+// Called every frame from updateBirds()
+BirdC.prototype.update = function() {
+  // Move forward along this bird's angle
+  this.pos.add(p5.Vector.fromAngle(this.angle).mult(this.vel));
+
+  // Reset when bird exits the right edge
+  if (this.pos.x > width * 1) {
+    this.pos = createVector(
+  random(0, width * 0.2),
+  random(height * 0.05, height * 0.25)
+);
+    this.vel   = random(0.8, 1.5);
+    this.flap  = random(0, TWO_PI);
+    this.angle = random(TWO_PI * 0.97, TWO_PI * 1.03);
+  }
+
+  // Increment flap cycle 
+  this.flap += this.vel * 0.05;
+
+  // Build three triangle points 
+
+  var p0 = p5.Vector.fromAngle(this.angle);
+  p0.normalize();
+  p0.mult(-5 * 1.5);
+  p0.add(this.pos);
+
+  var p1 = p5.Vector.fromAngle(this.angle);
+  p1.normalize();
+  p1.mult(5 * 2.5);
+  p1.add(this.pos);
+
+  var p2 = p5.Vector.fromAngle(this.angle);
+  p2.normalize();
+  p2.rotate(PI / 2);
+  p2.mult(10 * sin(this.flap));
+  p2.add(this.pos);
+
+  // ── Draw bird 
+  noStroke();
+  fill(0, 0, 0, 80);
+  ellipse(this.pos.x, this.pos.y, 5, 2);
+  triangle(p0.x, p0.y, p1.x, p1.y, p2.x, p2.y);
+};
+
+  // Called every frame from sketch.js draw()
+function updateBirds() {
+  if (!_birdsReady) return;
+
+  // States
+  if (STATE.dayNight >= 0.8) return;
+
+  for (let i = 0; i < _birds.length; i++) {
+    _birds[i].update();
+  }
+}

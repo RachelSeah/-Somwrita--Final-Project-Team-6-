@@ -57,6 +57,9 @@ function setup() {
   if (typeof initNoise === 'function') initNoise();
 
   if (typeof setupSounds === 'function') setupSounds();
+
+  // intialise set up for birds
+  if (typeof initBirds === 'function') initBirds();
 }
 
 
@@ -124,6 +127,9 @@ function draw() {
   // clear() makes the main canvas fully transparent so the DOM scene shows through
   clear();
   image(pg, 0, 0, nativeW, nativeH);
+
+  // Draw birds
+  if (typeof updateBirds === 'function') updateBirds();
 }
 
 
