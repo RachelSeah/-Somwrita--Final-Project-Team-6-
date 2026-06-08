@@ -28,9 +28,9 @@
 
 // ── SOUND OBJECTS ─────────────────────────────────────────────────────────────
 // Loaded in preloadSounds(), configured in setupSounds().
-let _sndDay      = null;   // ambient_day.wav      — daytime birdsong (looping)
-let _sndRain     = null;   // ambient_rain.wav     — rain/river sound (looping)
-let _sndCollapse = null;   // ambient_collapse.mp3 — collapse drone    (looping)
+let _sndDay = null;   // ambient_day.wav      — daytime birdsong (looping)
+let _sndRain = null;   // ambient_rain.wav     — rain/river sound (looping)
+let _sndNight = null;   // ambient_collapse.mp3 — collapse drone    (looping)
 
 
 // ── INTERNAL STATE ────────────────────────────────────────────────────────────
@@ -39,10 +39,10 @@ let _lastSoundKey = null;    // which track was playing last frame — avoids re
 
 
 // ── VOLUME CONFIG ─────────────────────────────────────────────────────────────
-const VOL_DAY      = 0.7;   // daytime birdsong volume
-const VOL_RAIN     = 0.8;   // rain/river volume — slightly louder, immersive
-const VOL_COLLAPSE = 0.6;   // collapse drone — present but not overwhelming
-const FADE_TIME    = 1.5;   // crossfade duration in seconds — smooth, not abrupt
+const VOL_DAY = 0.7;   // daytime birdsong volume
+const VOL_RAIN = 0.8;   // rain/river volume — slightly louder, immersive
+const VOL_NIGHT = 0.6;   // collapse drone — present but not overwhelming
+const FADE_TIME = 1.5;   // crossfade duration in seconds — smooth, not abrupt
 
 
 // =============================================================================
@@ -52,14 +52,14 @@ const FADE_TIME    = 1.5;   // crossfade duration in seconds — smooth, not abr
 // try/catch means a missing file logs a warning but never crashes the sketch.
 // =============================================================================
 function preloadSounds() {
-  try { _sndDay      = loadSound('assets/audio/ambient_day.wav'); }
-  catch(e) { console.warn('[sound.js] Could not load ambient_day.wav'); }
+  try { _sndDay = loadSound('assets/audio/ambient_day.wav'); }
+  catch (e) { console.warn('[sound.js] Could not load ambient_day.wav'); }
 
-  try { _sndRain     = loadSound('assets/audio/ambient_rain.wav'); }
-  catch(e) { console.warn('[sound.js] Could not load ambient_rain.wav'); }
+  try { _sndRain = loadSound('assets/audio/ambient_rain.wav'); }
+  catch (e) { console.warn('[sound.js] Could not load ambient_rain.wav'); }
 
   try { _sndCollapse = loadSound('assets/audio/ambient_collapse.mp3'); }
-  catch(e) { console.warn('[sound.js] Could not load ambient_collapse.mp3'); }
+  catch (e) { console.warn('[sound.js] Could not load ambient_collapse.mp3'); }
 }
 
 
@@ -83,9 +83,9 @@ function preloadSounds() {
 // Either path calls _beginPlayback() once and then cleans itself up.
 // =============================================================================
 function setupSounds() {
-  if (_sndDay)      { _sndDay.setLoop(true);      _sndDay.setVolume(0); }
-  if (_sndRain)     { _sndRain.setLoop(true);     _sndRain.setVolume(0); }
-  if (_sndCollapse) { _sndCollapse.setLoop(true); _sndCollapse.setVolume(0); }
+  if (_sndDay) { _sndDay.setLoop(true); _sndDay.setVolume(0); }
+  if (_sndRain) { _sndRain.setLoop(true); _sndRain.setVolume(0); }
+  if (_sndNight) { _sndNight.setLoop(true); _sndNight.setVolume(0); }
 
   let ctx = getAudioContext();
 
@@ -115,13 +115,13 @@ function setupSounds() {
   }
 
   function _removeGestureListeners() {
-    window.removeEventListener('mousedown',  _unlockOnGesture);
-    window.removeEventListener('keydown',    _unlockOnGesture);
+    window.removeEventListener('mousedown', _unlockOnGesture);
+    window.removeEventListener('keydown', _unlockOnGesture);
     window.removeEventListener('touchstart', _unlockOnGesture);
   }
 
-  window.addEventListener('mousedown',  _unlockOnGesture);
-  window.addEventListener('keydown',    _unlockOnGesture);
+  window.addEventListener('mousedown', _unlockOnGesture);
+  window.addEventListener('keydown', _unlockOnGesture);
   window.addEventListener('touchstart', _unlockOnGesture);
 }
 
@@ -134,9 +134,9 @@ function setupSounds() {
 function _beginPlayback() {
   if (_audioStarted) return;   // already running — nothing to do
 
-  if (_sndDay      && !_sndDay.isPlaying())      _sndDay.play();
-  if (_sndRain     && !_sndRain.isPlaying())     _sndRain.play();
-  if (_sndCollapse && !_sndCollapse.isPlaying()) _sndCollapse.play();
+  if (_sndDay && !_sndDay.isPlaying()) _sndDay.play();
+  if (_sndRain && !_sndRain.isPlaying()) _sndRain.play();
+  if (_sndNight && !_sndNight.isPlaying()) _sndNight.play();
 
   // Scene always opens as daytime PASSIVE — fade day audio in immediately
   if (_sndDay) _sndDay.setVolume(VOL_DAY, FADE_TIME);
@@ -182,8 +182,8 @@ function updateSound() {
   let key;
   if (STATE.rainActive) {
     key = 'rain';                              // rain overrides everything
-  } else if (STATE.currentState === 'COLLAPSE') {
-    key = 'collapse';
+  } else if (STATE.currentState === 'FIREFLIES') {
+    key = 'night';
   } else if (STATE.currentState === 'PASSIVE') {
     key = 'day';
   } else {
@@ -197,11 +197,11 @@ function updateSound() {
   // ── Set target volumes for all three tracks ──────────────────────────────────
   // Only the active track gets a non-zero value.
   // FADE_TIME seconds crossfade — old track fades out, new track fades in.
-  let volDay      = (key === 'day')      ? VOL_DAY      : 0;
-  let volRain     = (key === 'rain')     ? VOL_RAIN     : 0;
-  let volCollapse = (key === 'collapse') ? VOL_COLLAPSE : 0;
+  let volDay = (key === 'day') ? VOL_DAY : 0;
+  let volRain = (key === 'rain') ? VOL_RAIN : 0;
+  let volNight = (key === 'night') ? VOL_NIGHT : 0;
 
-  if (_sndDay)      _sndDay.setVolume(volDay,           FADE_TIME);
-  if (_sndRain)     _sndRain.setVolume(volRain,         FADE_TIME);
-  if (_sndCollapse) _sndCollapse.setVolume(volCollapse, FADE_TIME);
+  if (_sndDay) _sndDay.setVolume(volDay, FADE_TIME);
+  if (_sndRain) _sndRain.setVolume(volRain, FADE_TIME);
+  if (_sndNight) _sndNight.setVolume(volNight, FADE_TIME);
 }
