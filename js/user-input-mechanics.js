@@ -30,11 +30,11 @@
 // =============================================================================
 
 const TRAIL_POINT_SPACING = 30;   // min px between recorded drag points
-const FLOWER_SPACING      = 55;   // target px between blooms along the trail
-const FLOWER_MIN_GAP      = 42;   // reject a bloom closer than this to another
-const TRAIL_MIN_LENGTH    = 80;   // total drag must exceed this to bloom a trail
-const TRAIL_JITTER        = 26;   // sideways scatter off the path centre-line
-const CLICK_MIN_GAP       = 50;   // min px between a new clicked flower and any other
+const FLOWER_SPACING = 55;   // target px between blooms along the trail
+const FLOWER_MIN_GAP = 42;   // reject a bloom closer than this to another
+const TRAIL_MIN_LENGTH = 80;   // total drag must exceed this to bloom a trail
+const TRAIL_JITTER = 26;   // sideways scatter off the path centre-line
+const CLICK_MIN_GAP = 50;   // min px between a new clicked flower and any other
 
 // ── VALID FLOWER ZONES ────────────────────────────────────────────────────────
 // Each zone is the visible bounding box of one hill/ground SVG asset,
@@ -45,18 +45,18 @@ const CLICK_MIN_GAP       = 50;   // min px between a new clicked flower and any
 //
 const FLOWER_ZONES = [
   // ── Background hills (small flowers — these are further away) ──────────────
-  { id: 'hills-8', xMin: 1018, xMax: 1450, yMin: 421, yMax: 530, smallFlowers: true  },
-  { id: 'hills-6', xMin:  879, xMax: 1449, yMin: 485, yMax: 634, smallFlowers: true  },
+  { id: 'hills-8', xMin: 1018, xMax: 1450, yMin: 421, yMax: 530, smallFlowers: true },
+  { id: 'hills-6', xMin: 879, xMax: 1449, yMin: 485, yMax: 634, smallFlowers: true },
 
   // ── Mid-ground hills (normal flowers) ──────────────────────────────────────
-  { id: 'hills-5', xMin:   35, xMax:  743, yMin: 720, yMax: 799, smallFlowers: false },
-  { id: 'hills-4', xMin:  594, xMax: 1158, yMin: 880, yMax: 959, smallFlowers: false },
-  { id: 'hills-3', xMin:    9, xMax: 1425, yMin: 880, yMax: 959, smallFlowers: false },
+  { id: 'hills-5', xMin: 35, xMax: 743, yMin: 720, yMax: 799, smallFlowers: false },
+  { id: 'hills-4', xMin: 594, xMax: 1158, yMin: 880, yMax: 959, smallFlowers: false },
+  { id: 'hills-3', xMin: 9, xMax: 1425, yMin: 880, yMax: 959, smallFlowers: false },
 
   // ── Foreground hills (normal flowers) ──────────────────────────────────────
-  { id: 'hills-2',    xMin:   0, xMax:  391, yMin: 960, yMax: 1076, smallFlowers: false },
-  { id: 'first-hill', xMin:   0, xMax:  391, yMin: 960, yMax: 1081, smallFlowers: false },
-  { id: 'hills-1',    xMin:  14, xMax: 1448, yMin: 960, yMax: 1087, smallFlowers: false },
+  { id: 'hills-2', xMin: 0, xMax: 391, yMin: 960, yMax: 1076, smallFlowers: false },
+  { id: 'first-hill', xMin: 0, xMax: 391, yMin: 960, yMax: 1081, smallFlowers: false },
+  { id: 'hills-1', xMin: 14, xMax: 1448, yMin: 960, yMax: 1087, smallFlowers: false },
 ];
 
 // ── OVERLAP HELPERS ─────────────────────────────────────────────────────────
@@ -70,20 +70,20 @@ function isTooCloseToFlower(x, y, gap = CLICK_MIN_GAP) {
 function findFreePlantSpot(x, y, gap = CLICK_MIN_GAP) {
   // 1. Exact click point is clear → use it.
   if (!isTooCloseToFlower(x, y, gap)) return { x, y };
- 
+
   // 2. Try positions on expanding rings around the click.
   for (let attempt = 0; attempt < 12; attempt++) {
     let radius = gap * (1 + attempt * 0.25);     // grows each attempt
-    let ang    = random(0, TWO_PI);
-    let nx     = x + cos(ang) * radius;
-    let ny     = y + sin(ang) * radius;
- 
+    let ang = random(0, TWO_PI);
+    let nx = x + cos(ang) * radius;
+    let ny = y + sin(ang) * radius;
+
     // Must stay on a valid flower zone AND be clear of other flowers.
     if (getFlowerZone(nx, ny) && !isTooCloseToFlower(nx, ny, gap)) {
       return { x: nx, y: ny };
     }
   }
- 
+
   // 3. No room nearby → skip this click.
   return null;
 }
@@ -95,9 +95,9 @@ let _spawnedFlowers = [];
 
 // ── SEED TRAIL ────────────────────────────────────────────────────────────────
 // Tracks drag state for seed trail mechanic.
-let _isDragging      = false;
-let _dragPoints      = [];       // array of {x, y} points collected during drag
-let _trailFlowers    = [];       // flowers that bloom along the drag trail
+let _isDragging = false;
+let _dragPoints = [];       // array of {x, y} points collected during drag
+let _trailFlowers = [];       // flowers that bloom along the drag trail
 
 // ── BIRD NESTS ────────────────────────────────────────────────────────────────
 // Array of bird nest + bird objects spawned by double clicking a tree.
@@ -113,8 +113,8 @@ let _fadingTrees = [];
 
 // ── RAIN TIMER ────────────────────────────────────────────────────────────────
 // Rain runs for a fixed duration then stops automatically.
-const RAIN_DURATION   = 8000;   // milliseconds (8 seconds of rain)
-let   _rainStartTime  = null;
+const RAIN_DURATION = 8000;   // milliseconds (8 seconds of rain)
+let _rainStartTime = null;
 
 
 // =============================================================================
@@ -132,7 +132,7 @@ function screenToScene(screenX, screenY) {
 function getFlowerZone(sceneX, sceneY) {
   for (let zone of FLOWER_ZONES) {
     if (sceneX >= zone.xMin && sceneX <= zone.xMax &&
-        sceneY >= zone.yMin && sceneY <= zone.yMax) {
+      sceneY >= zone.yMin && sceneY <= zone.yMax) {
       return zone;
     }
   }
@@ -156,23 +156,23 @@ function isOnGrass(sceneX, sceneY) {
 // ocean, or pure ground from triggering a bird nest.
 const TREE_ZONES = [
   // tree-1  — large foreground tree, left side   (layer x=-30,  y=-120)
-  { id: 'tree-1',    xMin:   0, xMax:  500, yMin: 280, yMax: 820 },
+  { id: 'tree-1', xMin: 0, xMax: 500, yMin: 280, yMax: 820 },
   // tree-2  — mid-ground, left-centre             (layer x=100,  y=20)
-  { id: 'tree-2',    xMin:  50, xMax:  600, yMin: 300, yMax: 760 },
+  { id: 'tree-2', xMin: 50, xMax: 600, yMin: 300, yMax: 760 },
   // tree-3  — foreground, far left                (layer x=-150, y=100)
-  { id: 'tree-3',    xMin:   0, xMax:  400, yMin: 300, yMax: 820 },
+  { id: 'tree-3', xMin: 0, xMax: 400, yMin: 300, yMax: 820 },
   // tree-4  — mid-ground, centre                  (layer x=0,    y=25)
-  { id: 'tree-4',    xMin: 200, xMax:  900, yMin: 300, yMax: 760 },
+  { id: 'tree-4', xMin: 200, xMax: 900, yMin: 300, yMax: 760 },
   // tree-5  — mid-ground, far right               (layer x=1250, y=-60)
-  { id: 'tree-5',    xMin: 1050, xMax: 1455, yMin: 280, yMax: 720 },
+  { id: 'tree-5', xMin: 1050, xMax: 1455, yMin: 280, yMax: 720 },
   // tree-6  — mid-ground, left                    (layer x=-100, y=65)
-  { id: 'tree-6',    xMin:   0, xMax:  600, yMin: 320, yMax: 780 },
+  { id: 'tree-6', xMin: 0, xMax: 600, yMin: 320, yMax: 780 },
   // tree-7  — mid-ground, centre-right            (layer x=0,    y=0)
-  { id: 'tree-7',    xMin: 300, xMax: 1200, yMin: 300, yMax: 760 },
+  { id: 'tree-7', xMin: 300, xMax: 1200, yMin: 300, yMax: 760 },
   // tree-8  — background, spread across scene     (layer x=0,    y=-64)
-  { id: 'tree-8',    xMin: 100, xMax: 1350, yMin: 280, yMax: 680 },
+  { id: 'tree-8', xMin: 100, xMax: 1350, yMin: 280, yMax: 680 },
   // tree-bush — mid-ground shrub/tree cluster     (layer x=0,    y=0)
-  { id: 'tree-bush', xMin: 100, xMax:  900, yMin: 320, yMax: 760 },
+  { id: 'tree-bush', xMin: 100, xMax: 900, yMin: 320, yMax: 760 },
 ];
 
 // Returns true if the click lands inside any tree's bounding zone.
@@ -195,29 +195,29 @@ function isOnTree(sceneX, sceneY) {
 function mousePressed() {
   if (typeof startAudio === 'function') startAudio();
   let scene = screenToScene(mouseX, mouseY);
- 
+
   let zone = getFlowerZone(scene.x, scene.y);
   if (zone) {
     // Find a free, non-overlapping spot near the click.
     let spot = findFreePlantSpot(scene.x, scene.y);
- 
+
     if (spot) {
       // Re-check the zone at the (possibly nudged) spot so size matches the
       // hill it actually lands on.
       let spotZone = getFlowerZone(spot.x, spot.y) || zone;
       spawnFlower(spot.x, spot.y, spotZone.smallFlowers ? 0.5 : 1.0);
       addHealth();
- 
+
       // Count this flower click — night/fireflies triggers after 5
       STATE.flowerClickCount++;
       if (STATE.flowerClickCount >= FLOWER_CLICK_THRESHOLD &&
-          STATE.currentState !== 'COLLAPSE') {
+        STATE.currentState !== 'COLLAPSE') {
         triggerFireflies();
       }
     }
     // else: area too crowded → no flower, no health. Click simply does nothing.
   }
- 
+
   // Start drag tracking — only seed the first point if it's on valid grass.
   _isDragging = true;
   _dragPoints = zone ? [{ x: scene.x, y: scene.y, small: zone.smallFlowers }] : [];
@@ -230,7 +230,7 @@ function mousePressed() {
 // =============================================================================
 function mouseDragged() {
   let scene = screenToScene(mouseX, mouseY);
- 
+
   let zone = getFlowerZone(scene.x, scene.y);
   if (_isDragging && zone) {
     let last = _dragPoints[_dragPoints.length - 1];
@@ -251,11 +251,11 @@ function mouseReleased() {
     bloomTrailFlowers(_dragPoints);
     addHealth();  // +10 health for planting a wildflower trail
   }
- 
+
   _isDragging = false;
   _dragPoints = [];
 }
- 
+
 // Helper — total length of a polyline of {x, y} points.
 function pathLength(points) {
   let total = 0;
@@ -264,7 +264,7 @@ function pathLength(points) {
   }
   return total;
 }
- 
+
 
 // =============================================================================
 // DOUBLE CLICK
@@ -347,20 +347,20 @@ function keyPressed() {
 function spawnFlower(x, y, sizeMult = 1.0) {
 
   // for pop flower sound
-  if (typeof playFlowerPop === 'function') playFlowerPop(); 
+  if (typeof playFlowerPop === 'function') playFlowerPop();
 
   // Pick style — rarer styles appear less often
-  let roll  = random(1);
+  let roll = random(1);
   let style = roll < 0.60 ? 0 : roll < 0.85 ? 1 : 2;
 
   // Colour palette per style — all muted naturals that suit the landscape
   let r, g, b;
   if (style === 0) {
     // Warm pinks, reds, soft oranges (existing style)
-    r = random(200, 255); g = random(80,  175); b = random(60,  120);
+    r = random(200, 255); g = random(80, 175); b = random(60, 120);
   } else if (style === 1) {
     // Cooler purples, lavenders, soft pinks
-    r = random(175, 225); g = random(65,  115); b = random(155, 220);
+    r = random(175, 225); g = random(65, 115); b = random(155, 220);
   } else {
     // Pale yellows, creams, whites — dandelion look
     r = random(235, 255); g = random(220, 250); b = random(185, 230);
@@ -368,22 +368,22 @@ function spawnFlower(x, y, sizeMult = 1.0) {
 
   _spawnedFlowers.push({
     x, y,
-    size:       2 * sizeMult,
+    size: 2 * sizeMult,
     targetSize: random(18, 30) * sizeMult,
-    growSpeed:  random(0.5, 1.0),
+    growSpeed: random(0.5, 1.0),
     r, g, b,
-    opacity:    255,
-    alive:      true,
+    opacity: 255,
+    alive: true,
 
     // Style metadata — used in drawSpawnedFlowers()
-    style:       style,
+    style: style,
     petalOffset: random(TWO_PI),          // random rotation so no two flowers align
-    petalCount:  style === 1             // triangular: 4–6 petals
+    petalCount: style === 1             // triangular: 4–6 petals
       ? floor(random(4, 7))             //  dandelion: 14–20 spokes
       : floor(random(14, 21)),
-    petalSeed:   random(10000),           // noise seed for per-petal organic wobble
-    swayT:       random(10000),           // unique noise seed for stem sway animation
-    stemCurve:   random(-3.5, 3.5),       // natural lean offset for the bezier control point
+    petalSeed: random(10000),           // noise seed for per-petal organic wobble
+    swayT: random(10000),           // unique noise seed for stem sway animation
+    stemCurve: random(-3.5, 3.5),       // natural lean offset for the bezier control point
   });
 }
 
@@ -395,41 +395,41 @@ function spawnFlower(x, y, sizeMult = 1.0) {
 // =============================================================================
 function bloomTrailFlowers(points) {
   if (points.length < 2) return;
- 
-  let placed   = [];   // {x, y} of blooms accepted so far (overlap test)
+
+  let placed = [];   // {x, y} of blooms accepted so far (overlap test)
   let distSoFar = 0;   // distance walked along the path
-  let nextAt    = 0;   // distance at which to drop the next bloom
-  let order     = 0;   // sequence index → staggers the bloom timing
- 
+  let nextAt = 0;   // distance at which to drop the next bloom
+  let order = 0;   // sequence index → staggers the bloom timing
+
   for (let i = 1; i < points.length; i++) {
     let a = points[i - 1];
     let b = points[i];
     let segLen = dist(a.x, a.y, b.x, b.y);
     if (segLen === 0) continue;
- 
+
     // Unit vector along this segment, and its perpendicular (for sideways jitter)
     let ux = (b.x - a.x) / segLen;
     let uy = (b.y - a.y) / segLen;
     let px = -uy;   // perpendicular
-    let py =  ux;
- 
+    let py = ux;
+
     // Step along the segment dropping a bloom each time we pass `nextAt`.
     while (nextAt <= distSoFar + segLen) {
-      let t  = (nextAt - distSoFar) / segLen;   // 0..1 along this segment
+      let t = (nextAt - distSoFar) / segLen;   // 0..1 along this segment
       let bx = a.x + ux * segLen * t;
       let by = a.y + uy * segLen * t;
- 
+
       // Sideways scatter, perpendicular to the drag direction.
       let off = random(-TRAIL_JITTER, TRAIL_JITTER);
-      let fx  = bx + px * off + random(-6, 6);
-      let fy  = by + py * off + random(-6, 6);
- 
+      let fx = bx + px * off + random(-6, 6);
+      let fy = by + py * off + random(-6, 6);
+
       // Reject if too close to a bloom already placed (kills clustering).
       let tooClose = placed.some(q => dist(fx, fy, q.x, q.y) < FLOWER_MIN_GAP);
- 
+
       // Only bloom if the jittered point is still on valid grass.
       let zone = getFlowerZone(fx, fy);
- 
+
       if (!tooClose && zone) {
         placed.push({ x: fx, y: fy });
         let small = zone.smallFlowers;
@@ -439,11 +439,11 @@ function bloomTrailFlowers(points) {
           spawnFlower(fx, fy, small ? 0.5 : 1.0);
         }, delay);
       }
- 
+
       // Vary the gap a little so spacing isn't mechanically perfect.
       nextAt += FLOWER_SPACING + random(-10, 12);
     }
- 
+
     distSoFar += segLen;
   }
 }
@@ -471,11 +471,11 @@ function fadeSomeFlowers(count) {
 // =============================================================================
 function fadeRandomTrees(count) {
   const treeIds = ['tree-1', 'tree-2', 'tree-3', 'tree-4',
-                   'tree-5', 'tree-6', 'tree-7', 'tree-8'];
+    'tree-5', 'tree-6', 'tree-7', 'tree-8'];
 
   // Shuffle and pick `count` trees
   let shuffled = treeIds.sort(() => random() - 0.5);
-  let chosen   = shuffled.slice(0, count);
+  let chosen = shuffled.slice(0, count);
 
   for (let id of chosen) {
     // Only add if not already fading
@@ -506,28 +506,28 @@ function restoreAllTrees() {
 // =============================================================================
 function spawnBirdNest(x, y) {
   let birdCount = floor(random(1, 3)); // 1 or 2 birds
-  let birds     = [];
+  let birds = [];
 
   for (let i = 0; i < birdCount; i++) {
     birds.push({
       // Birds start off-screen to the left and fly toward the nest
-      x:       -50,
-      y:       random(150, 400),
+      x: -50,
+      y: random(150, 400),
       targetX: x + random(-40, 40),
       targetY: y - random(20, 60),
-      speed:   random(2, 4),
+      speed: random(2, 4),
       arrived: false,
-      flapT:   random(1000)    // offset so birds don't flap in sync
+      flapT: random(1000)    // offset so birds don't flap in sync
     });
   }
 
   _birdNests.push({
-    x:      x,
-    y:      y,
-    size:   0,             // nest grows from 0
+    x: x,
+    y: y,
+    size: 0,             // nest grows from 0
     targetSize: 30,
-    birds:  birds,
-    age:    0              // incremented each frame, used for lifetime
+    birds: birds,
+    age: 0              // incremented each frame, used for lifetime
   });
 }
 
@@ -564,7 +564,7 @@ function drawSpawnedFlowers() {
     } else {
       // X key damage — continue fading out
       ft.opacity -= 0.005;
-      ft.opacity  = max(ft.opacity, 0);
+      ft.opacity = max(ft.opacity, 0);
     }
   }
 
@@ -606,8 +606,8 @@ function drawSpawnedFlowers() {
 
     // Collapse tint
     let colR = lerp(f.r, lerp(f.r * 0.7, 100, 0.5), ct);
-    let colG = lerp(f.g, 55,  ct);
-    let colB = lerp(f.b, 40,  ct);
+    let colG = lerp(f.g, 55, ct);
+    let colB = lerp(f.b, 40, ct);
     let colA = lerp(f.opacity, f.opacity * 0.35, ct);
 
     // Night tint (applied on top of collapse tint)
@@ -617,22 +617,22 @@ function drawSpawnedFlowers() {
     colA = lerp(colA, colA * 0.65, dn);   // still somewhat visible at night
 
     // Stem colour also tints with collapse
-    let stemG = lerp(120, 60,  ct);
+    let stemG = lerp(120, 60, ct);
     let stemA = lerp(colA, colA * 0.5, ct);
 
     // Flower centre colour — yellows shift brown in collapse, dim at night
     let centreR = lerp(255, 140, ct);
-    let centreG = lerp(220, 90,  ct);
-    let centreB = lerp(80,  40,  ct);
+    let centreG = lerp(220, 90, ct);
+    let centreB = lerp(80, 40, ct);
     centreR = lerp(centreR, centreR * 0.45, dn);
     centreG = lerp(centreG, centreG * 0.45, dn);
     centreB = lerp(centreB, centreB * 0.55, dn);
 
     // Safe fallbacks for old flower objects that lack new style properties
-    let style       = f.style       !== undefined ? f.style       : 0;
+    let style = f.style !== undefined ? f.style : 0;
     let petalOffset = f.petalOffset !== undefined ? f.petalOffset : 0;
-    let petalSeed   = f.petalSeed   !== undefined ? f.petalSeed   : 0;
-    let petalCount  = f.petalCount  !== undefined ? f.petalCount  : 16;
+    let petalSeed = f.petalSeed !== undefined ? f.petalSeed : 0;
+    let petalCount = f.petalCount !== undefined ? f.petalCount : 16;
 
     // ── Sway — Perlin noise, base pinned to ground ───────────────────────────────
     // (f.x, f.y) is the fixed stem base — it never moves.
@@ -642,12 +642,15 @@ function drawSpawnedFlowers() {
     // Sway range 8–18 px so the movement is clearly visible.
     // Noise runs at 0.8× noiseT so the breeze feels lively but not jittery.
     let maxSway = map(f.targetSize, 9, 30, 8, 18);
-    let swayX   = map(noise(f.swayT        || 0, STATE.noiseT * 0.8),  0, 1, -maxSway, maxSway);
-    let swayY   = map(noise((f.swayT || 0) + 500, STATE.noiseT * 0.7), 0, 1, -1.5, 1.5);
+    let swayX = map(noise(f.swayT || 0, STATE.noiseT * 0.8), 0, 1, -maxSway, maxSway);
+    let swayY = map(noise((f.swayT || 0) + 500, STATE.noiseT * 0.7), 0, 1, -1.5, 1.5);
 
     // Swayed flower head — used as draw origin for all petal styles
     let cx = f.x + swayX;
     let cy = f.y - f.size + swayY;
+
+    // Bass pulse — slightly enlarges flowers on the beat
+    let pulse = (typeof getBassPulse === 'function') ? getBassPulse() * 5 : 0;
 
     // ── Stem — quadratic bezier, base fixed, head follows sway ──────────────────
     // Control point sits at ~55% of stem height with half the sway offset plus
@@ -670,7 +673,7 @@ function drawSpawnedFlowers() {
     // ── Style 0: rounded ellipse petals (5 petals) ──────────────────────────────
     if (style === 0) {
       for (let p = 0; p < 5; p++) {
-        let angle  = (TWO_PI / 5) * p + petalOffset;
+        let angle = (TWO_PI / 5) * p + petalOffset;
         let petalX = cx + cos(angle) * f.size * 0.5;
         let petalY = cy + sin(angle) * f.size * 0.5;
         pg.fill(colR, colG, colB, colA);
@@ -679,15 +682,15 @@ function drawSpawnedFlowers() {
       pg.fill(centreR, centreG, centreB, colA);
       pg.ellipse(cx, cy, f.size * 0.4, f.size * 0.4);
 
-    // ── Style 1: triangular petals (4–6) ────────────────────────────────────────
-    // Each petal is a triangle with its tip pointing outward.
-    // Perlin noise adds a subtle per-petal angle wobble that changes over time —
-    // so petals appear to breathe gently without visible repetition.
+      // ── Style 1: triangular petals (4–6) ────────────────────────────────────────
+      // Each petal is a triangle with its tip pointing outward.
+      // Perlin noise adds a subtle per-petal angle wobble that changes over time —
+      // so petals appear to breathe gently without visible repetition.
     } else if (style === 1) {
       for (let p = 0; p < petalCount; p++) {
         // noise(petalSeed + p*0.4, noiseT) gives each petal its own slow wobble
         let wobble = map(noise(petalSeed + p * 0.4, STATE.noiseT * 0.4), 0, 1, -0.09, 0.09);
-        let angle  = (TWO_PI / petalCount) * p + petalOffset + wobble;
+        let angle = (TWO_PI / petalCount) * p + petalOffset + wobble;
 
         // Tip at petalDist from centre
         let tipX = cx + cos(angle) * f.size * 0.88;
@@ -707,14 +710,14 @@ function drawSpawnedFlowers() {
       pg.fill(centreR * 0.75, centreG * 0.6, centreB, colA);
       pg.ellipse(cx, cy, f.size * 0.28, f.size * 0.28);
 
-    // ── Style 2: dandelion — thin spokes with tiny seed-head tips ───────────────
-    // Perlin noise independently varies each spoke's angle and length each frame,
-    // giving the dandelion head a living, breathing quality.
+      // ── Style 2: dandelion — thin spokes with tiny seed-head tips ───────────────
+      // Perlin noise independently varies each spoke's angle and length each frame,
+      // giving the dandelion head a living, breathing quality.
     } else {
       for (let s = 0; s < petalCount; s++) {
-        let aWobble = map(noise(petalSeed + s * 0.30,       STATE.noiseT * 0.35), 0, 1, -0.13, 0.13);
+        let aWobble = map(noise(petalSeed + s * 0.30, STATE.noiseT * 0.35), 0, 1, -0.13, 0.13);
         let lenMult = map(noise(petalSeed + s * 0.30 + 500, STATE.noiseT * 0.25), 0, 1, 0.75, 1.0);
-        let angle    = (TWO_PI / petalCount) * s + petalOffset + aWobble;
+        let angle = (TWO_PI / petalCount) * s + petalOffset + aWobble;
         // ↓ Reduced to ~75% of previous size (0.68 vs 0.9)
         let spokeLen = f.size * 0.68 * lenMult;
 
@@ -780,7 +783,7 @@ function drawSpawnedBirds() {
 
       // Draw bird as two curved wing strokes (same approach as project_v4)
       let flapAngle = sin(frameCount * 0.1 + bird.flapT) * 0.4;
-      let wl        = 12;  // wing length
+      let wl = 12;  // wing length
 
       pg.stroke(40, 30, 20, 220);
       pg.strokeWeight(1);
@@ -790,7 +793,7 @@ function drawSpawnedBirds() {
       pg.vertex(bird.x, bird.y);
       pg.quadraticVertex(
         bird.x - wl * 0.5, bird.y - sin(flapAngle) * wl * 0.3,
-        bird.x - wl,       bird.y - sin(flapAngle) * wl * 0.6
+        bird.x - wl, bird.y - sin(flapAngle) * wl * 0.6
       );
       pg.endShape();
 
@@ -799,7 +802,7 @@ function drawSpawnedBirds() {
       pg.vertex(bird.x, bird.y);
       pg.quadraticVertex(
         bird.x + wl * 0.5, bird.y - sin(flapAngle) * wl * 0.3,
-        bird.x + wl,       bird.y - sin(flapAngle) * wl * 0.6
+        bird.x + wl, bird.y - sin(flapAngle) * wl * 0.6
       );
       pg.endShape();
     }
