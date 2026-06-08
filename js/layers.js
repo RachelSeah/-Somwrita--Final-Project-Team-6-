@@ -36,7 +36,7 @@ const LAYERS = [
     id:         'sky',            // unique name used to identify this layer
     dayFile:    'Assets-25.svg',              // filename inside assets/day/
     nightFile:  'Assets Night-25.svg',        // filename inside assets/night/
-    x: 3,   y: 0,                // position offset in pixels from top-left
+    x: 3,   y:2 ,                // position offset in pixels from top-left
     sway:       false,            // does this element sway in the breeze?
     swayAmount: 0,                // intensity of sway: 0 = none, 1 = maximum
     tintable:   true,             // does this change colour based on health?
