@@ -104,5 +104,8 @@ function updateSound() {
 }
 
 function playFlowerPop() {
-  if (_audioStarted && _sndPop) _sndPop.play();
+  if (_audioStarted && _sndPop) {
+    _sndPop.setVolume(0.03);   // sound volume
+    _sndPop.play();
+  }
 }
