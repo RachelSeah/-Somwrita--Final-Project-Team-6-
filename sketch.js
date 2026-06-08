@@ -128,9 +128,12 @@ function draw() {
   clear();
   image(pg, 0, 0, nativeW, nativeH);
 
-    clear();
+  // - RENDER birds
+  clear();
   image(pg, 0, 0, nativeW, nativeH);
   if (typeof updateBirds === 'function') updateBirds(); // ← add this
+
+  if (typeof updateOceanSway === 'function') updateOceanSway();
 }
 
 
@@ -148,7 +151,7 @@ function updateLayerTransforms() {
     let hasSway = layer.sway;
 
     // Skip layers that never move — no need to set their transform each frame
-    if (!isCloud && !isSun && !hasSway) continue;
+if (!isCloud && !isSun && !hasSway && layer.id !== 'ocean') continue;
 
     let el = document.getElementById('layer-' + layer.id);
     if (!el) continue;
@@ -171,8 +174,8 @@ function updateLayerTransforms() {
       dy += getSunRiseOffset();
     }
 
-    el.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
-  }
+if (layer.id === 'ocean') dx += sin(frameCount * 0.01) * 25;
+el.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';  }
 }
 
 
