@@ -132,11 +132,11 @@ function setupSounds() {
 // Guarded by _audioStarted so it only ever runs once.
 // =============================================================================
 function _beginPlayback() {
-  if (_audioStarted) return;   // already running — nothing to do
+  if (_audioStarted) return;
 
-  if (_sndDay && !_sndDay.isPlaying()) _sndDay.play();
-  if (_sndRain && !_sndRain.isPlaying()) _sndRain.play();
-  if (_sndNight && !_sndNight.isPlaying()) _sndNight.play();
+  if (_sndDay   && _sndDay.isLoaded()   && !_sndDay.isPlaying())   _sndDay.play();
+  if (_sndRain  && _sndRain.isLoaded()  && !_sndRain.isPlaying())  _sndRain.play();
+  if (_sndNight && _sndNight.isLoaded() && !_sndNight.isPlaying()) _sndNight.play();
 
   // Scene always opens as daytime PASSIVE — fade day audio in immediately
   if (_sndDay) _sndDay.setVolume(VOL_DAY, FADE_TIME);
