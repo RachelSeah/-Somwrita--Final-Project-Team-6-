@@ -29,6 +29,12 @@
 //
 // =============================================================================
 
+const TRAIL_POINT_SPACING = 30;   // min px between recorded drag points
+const FLOWER_SPACING      = 55;   // target px between blooms along the trail
+const FLOWER_MIN_GAP      = 42;   // reject a bloom closer than this to another
+const TRAIL_MIN_LENGTH    = 80;   // total drag must exceed this to bloom a trail
+const TRAIL_JITTER        = 26;   // sideways scatter off the path centre-line
+const CLICK_MIN_GAP       = 50;   // min px between a new clicked flower and any other
 
 // ── VALID FLOWER ZONES ────────────────────────────────────────────────────────
 // Each zone is the visible bounding box of one hill/ground SVG asset,
@@ -53,6 +59,34 @@ const FLOWER_ZONES = [
   { id: 'hills-1',    xMin:  14, xMax: 1448, yMin: 960, yMax: 1087, smallFlowers: false },
 ];
 
+// ── OVERLAP HELPERS ─────────────────────────────────────────────────────────
+// True if (x, y) is within `gap` of any already-spawned flower.
+function isTooCloseToFlower(x, y, gap = CLICK_MIN_GAP) {
+  return _spawnedFlowers.some(f => dist(x, y, f.x, f.y) < gap);
+}
+
+// Returns a plantable point near (x, y) that isn't clustered, or null if the
+// area is too crowded. Tries the exact point first, then rings outward.
+function findFreePlantSpot(x, y, gap = CLICK_MIN_GAP) {
+  // 1. Exact click point is clear → use it.
+  if (!isTooCloseToFlower(x, y, gap)) return { x, y };
+ 
+  // 2. Try positions on expanding rings around the click.
+  for (let attempt = 0; attempt < 12; attempt++) {
+    let radius = gap * (1 + attempt * 0.25);     // grows each attempt
+    let ang    = random(0, TWO_PI);
+    let nx     = x + cos(ang) * radius;
+    let ny     = y + sin(ang) * radius;
+ 
+    // Must stay on a valid flower zone AND be clear of other flowers.
+    if (getFlowerZone(nx, ny) && !isTooCloseToFlower(nx, ny, gap)) {
+      return { x: nx, y: ny };
+    }
+  }
+ 
+  // 3. No room nearby → skip this click.
+  return null;
+}
 
 // ── SPAWNED FLOWERS ───────────────────────────────────────────────────────────
 // Array of flower objects spawned by clicking or dragging on grass.
@@ -161,27 +195,33 @@ function isOnTree(sceneX, sceneY) {
 function mousePressed() {
   if (typeof startAudio === 'function') startAudio();
   let scene = screenToScene(mouseX, mouseY);
-
+ 
   let zone = getFlowerZone(scene.x, scene.y);
   if (zone) {
-    // Single click on a valid hill — grow a flower at this position
-    // Pass 0.5 size multiplier for distant hills (hills-6, 7, 8)
-    spawnFlower(scene.x, scene.y, zone.smallFlowers ? 0.5 : 1.0);
-    addHealth();
-
-    // Count this flower click — night/fireflies triggers after 5
-    STATE.flowerClickCount++;
-    if (STATE.flowerClickCount >= FLOWER_CLICK_THRESHOLD &&
-        STATE.currentState !== 'COLLAPSE') {
-      triggerFireflies();
+    // Find a free, non-overlapping spot near the click.
+    let spot = findFreePlantSpot(scene.x, scene.y);
+ 
+    if (spot) {
+      // Re-check the zone at the (possibly nudged) spot so size matches the
+      // hill it actually lands on.
+      let spotZone = getFlowerZone(spot.x, spot.y) || zone;
+      spawnFlower(spot.x, spot.y, spotZone.smallFlowers ? 0.5 : 1.0);
+      addHealth();
+ 
+      // Count this flower click — night/fireflies triggers after 5
+      STATE.flowerClickCount++;
+      if (STATE.flowerClickCount >= FLOWER_CLICK_THRESHOLD &&
+          STATE.currentState !== 'COLLAPSE') {
+        triggerFireflies();
+      }
     }
+    // else: area too crowded → no flower, no health. Click simply does nothing.
   }
-
+ 
   // Start drag tracking — only seed the first point if it's on valid grass.
   _isDragging = true;
   _dragPoints = zone ? [{ x: scene.x, y: scene.y, small: zone.smallFlowers }] : [];
 }
-
 
 // =============================================================================
 // MOUSE DRAGGED
@@ -190,10 +230,13 @@ function mousePressed() {
 // =============================================================================
 function mouseDragged() {
   let scene = screenToScene(mouseX, mouseY);
-
+ 
   let zone = getFlowerZone(scene.x, scene.y);
   if (_isDragging && zone) {
-    _dragPoints.push({ x: scene.x, y: scene.y, small: zone.smallFlowers });
+    let last = _dragPoints[_dragPoints.length - 1];
+    if (!last || dist(scene.x, scene.y, last.x, last.y) >= TRAIL_POINT_SPACING) {
+      _dragPoints.push({ x: scene.x, y: scene.y, small: zone.smallFlowers });
+    }
   }
 }
 
@@ -204,18 +247,24 @@ function mouseDragged() {
 // If the user dragged far enough on grass, bloom wildflowers along the trail.
 // =============================================================================
 function mouseReleased() {
-  let scene = screenToScene(mouseX, mouseY);
-
-  // Only count as a seed trail if the drag covered meaningful distance
-  if (_isDragging && _dragPoints.length > 10) {
+  if (_isDragging && pathLength(_dragPoints) > TRAIL_MIN_LENGTH) {
     bloomTrailFlowers(_dragPoints);
     addHealth();  // +10 health for planting a wildflower trail
   }
-
+ 
   _isDragging = false;
   _dragPoints = [];
 }
-
+ 
+// Helper — total length of a polyline of {x, y} points.
+function pathLength(points) {
+  let total = 0;
+  for (let i = 1; i < points.length; i++) {
+    total += dist(points[i].x, points[i].y, points[i - 1].x, points[i - 1].y);
+  }
+  return total;
+}
+ 
 
 // =============================================================================
 // DOUBLE CLICK
@@ -342,23 +391,57 @@ function spawnFlower(x, y, sizeMult = 1.0) {
 // each with a staggered delay so they appear to bloom sequentially.
 // =============================================================================
 function bloomTrailFlowers(points) {
-  // Sample every Nth point so flowers aren't too dense
-  let step = max(1, floor(points.length / 12));
-
-  for (let i = 0; i < points.length; i += step) {
-    let pt = points[i];
-
-    // Stagger the bloom — flowers appear one after another along the trail
-    // setTimeout schedules each flower to appear after a delay
-    let delay = (i / step) * 200;  // 200ms between each flower
-
-    setTimeout(() => {
-      spawnFlower(
-        pt.x + random(-15, 15),
-        pt.y + random(-10, 10),
-        pt.small ? 0.5 : 1.0
-      );
-    }, delay);
+  if (points.length < 2) return;
+ 
+  let placed   = [];   // {x, y} of blooms accepted so far (overlap test)
+  let distSoFar = 0;   // distance walked along the path
+  let nextAt    = 0;   // distance at which to drop the next bloom
+  let order     = 0;   // sequence index → staggers the bloom timing
+ 
+  for (let i = 1; i < points.length; i++) {
+    let a = points[i - 1];
+    let b = points[i];
+    let segLen = dist(a.x, a.y, b.x, b.y);
+    if (segLen === 0) continue;
+ 
+    // Unit vector along this segment, and its perpendicular (for sideways jitter)
+    let ux = (b.x - a.x) / segLen;
+    let uy = (b.y - a.y) / segLen;
+    let px = -uy;   // perpendicular
+    let py =  ux;
+ 
+    // Step along the segment dropping a bloom each time we pass `nextAt`.
+    while (nextAt <= distSoFar + segLen) {
+      let t  = (nextAt - distSoFar) / segLen;   // 0..1 along this segment
+      let bx = a.x + ux * segLen * t;
+      let by = a.y + uy * segLen * t;
+ 
+      // Sideways scatter, perpendicular to the drag direction.
+      let off = random(-TRAIL_JITTER, TRAIL_JITTER);
+      let fx  = bx + px * off + random(-6, 6);
+      let fy  = by + py * off + random(-6, 6);
+ 
+      // Reject if too close to a bloom already placed (kills clustering).
+      let tooClose = placed.some(q => dist(fx, fy, q.x, q.y) < FLOWER_MIN_GAP);
+ 
+      // Only bloom if the jittered point is still on valid grass.
+      let zone = getFlowerZone(fx, fy);
+ 
+      if (!tooClose && zone) {
+        placed.push({ x: fx, y: fy });
+        let small = zone.smallFlowers;
+        let delay = order * 120;   // staggered sequential bloom
+        order++;
+        setTimeout(() => {
+          spawnFlower(fx, fy, small ? 0.5 : 1.0);
+        }, delay);
+      }
+ 
+      // Vary the gap a little so spacing isn't mechanically perfect.
+      nextAt += FLOWER_SPACING + random(-10, 12);
+    }
+ 
+    distSoFar += segLen;
   }
 }
 
