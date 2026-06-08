@@ -646,8 +646,10 @@ function drawSpawnedFlowers() {
     let swayY = map(noise((f.swayT || 0) + 500, STATE.noiseT * 0.7), 0, 1, -1.5, 1.5);
 
     // Swayed flower head — used as draw origin for all petal styles
-    let cx = f.x + swayX;
-    let cy = f.y - f.size + swayY;
+    let pOffX = (typeof _parallaxX !== 'undefined') ? _parallaxX * 8 : 0;
+    let pOffY = (typeof _parallaxY !== 'undefined') ? _parallaxY * 3 : 0;
+    let cx = f.x + swayX + pOffX;
+    let cy = f.y - f.size + swayY + pOffY;
 
     // Bass pulse — slightly enlarges flowers on the beat
     let pulse = (typeof getBassPulse === 'function') ? getBassPulse() * 5 : 0;
