@@ -36,12 +36,11 @@ async function fetchSVG(path) {
 // e.g. cls-1 in layer 3 becomes d3-cls-1
 function isolateSVG(svgText, scope) {
   // Scope class names in <style> blocks
-  let out = svgText.replace(/\.(cls-[\w-]+)/g, '.' + scope + '-$1');
-  // Scope class attributes on elements
+let out = svgText.replace(/\.(cls-[\w-]+|st[\w-]+)/g, '.' + scope + '-$1');   // Scope class attributes on elements
   out = out.replace(/class="([^"]*)"/g, (_, classes) => {
     const scoped = classes.trim().split(/\s+/)
-      .map(c => c.startsWith('cls-') ? scope + '-' + c : c)
-      .join(' ');
+  .map(c => (c.startsWith('cls-') || c.startsWith('st')) ? scope + '-' + c : c)
+  .join(' ');
     return 'class="' + scoped + '"';
   });
   // Collect all id attributes
