@@ -52,14 +52,14 @@ const FADE_TIME = 1.5;   // crossfade duration in seconds — smooth, not abrupt
 // try/catch means a missing file logs a warning but never crashes the sketch.
 // =============================================================================
 function preloadSounds() {
-  try { _sndDay = loadSound('assets/audio/ambient_day.wav'); }
-  catch (e) { console.warn('[sound.js] Could not load ambient_day.wav'); }
+  try { _sndDay = loadSound('assets/audio/ambient.mp3'); }
+  catch (e) { console.warn('[audio] Could not load ambient.mp3'); }
 
-  try { _sndRain = loadSound('assets/audio/ambient_rain.wav'); }
-  catch (e) { console.warn('[sound.js] Could not load ambient_rain.wav'); }
+  try { _sndRain = loadSound('assets/audio/ambient_rain.mp3'); }
+  catch (e) { console.warn('[audio] Could not load ambient_rain.mp3'); }
 
-  try { _sndCollapse = loadSound('assets/audio/ambient_collapse.mp3'); }
-  catch (e) { console.warn('[sound.js] Could not load ambient_collapse.mp3'); }
+  try { _sndNight = loadSound('assets/audio/night.mp3'); }
+  catch (e) { console.warn('[audio] Could not load night.mp3'); }
 }
 
 
