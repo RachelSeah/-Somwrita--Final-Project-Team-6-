@@ -50,10 +50,12 @@ function setupSounds() {
   }
   function _removeListeners() {
     window.removeEventListener('mousedown', _unlockOnGesture);
+    window.removeEventListener('mousemove', _unlockOnGesture);
     window.removeEventListener('keydown', _unlockOnGesture);
     window.removeEventListener('touchstart', _unlockOnGesture);
   }
   window.addEventListener('mousedown', _unlockOnGesture);
+  window.addEventListener('mousemove', _unlockOnGesture);
   window.addEventListener('keydown', _unlockOnGesture);
   window.addEventListener('touchstart', _unlockOnGesture);
 }
