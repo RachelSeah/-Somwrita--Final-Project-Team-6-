@@ -23,7 +23,6 @@
 // Native scene dimensions — SVGs and all coordinates use these
 const nativeW = 1455;
 const nativeH = 1087;
-const MUTE_BTN = { x: 1360, y: 28, w: 64, h: 64 };
 
 // pg — offscreen buffer for rain, fireflies, flowers (composited onto main canvas)
 let pg;
@@ -55,20 +54,17 @@ function setup() {
   pg.noStroke();
 
   // Initialise Perlin noise systems — noise.js
-  if (typeof setupSounds === 'function') setupSounds();
+  if (typeof initNoise === 'function') initNoise();
 
-  // Add the mute toggle button (needs audio set up first)
-  if (typeof createMuteButton === 'function') createMuteButton();
+  if (typeof setupSounds === 'function') setupSounds();
 
   // intialise set up for birds
   if (typeof initBirds === 'function') initBirds();
+
+  // setting uo mute button
+  createMuteButton();
 } 
 
-// True if a scene-space point is inside the button (used by the click handler).
-function isOnMuteButton(px, py) {
-  return px >= MUTE_BTN.x && px <= MUTE_BTN.x + MUTE_BTN.w &&
-         py >= MUTE_BTN.y && py <= MUTE_BTN.y + MUTE_BTN.h;
-}
 
 // =============================================================================
 // DRAW — runs ~60 times per second
@@ -138,27 +134,6 @@ function draw() {
     clear();
   image(pg, 0, 0, nativeW, nativeH);
   if (typeof updateBirds === 'function') updateBirds(); // ← add this
-
-  function drawMuteButton() {
-  let muted = (typeof isMuted === 'function') ? isMuted() : false;
- 
-  push();
-  rectMode(CORNER);
- 
-  // rounded translucent background
-  noStroke();
-  fill(0, 0, 0, 90);
-  rect(MUTE_BTN.x, MUTE_BTN.y, MUTE_BTN.w, MUTE_BTN.h, 14);
- 
-  // emoji icon, centred in the button
-  textAlign(CENTER, CENTER);
-  textSize(MUTE_BTN.h * 0.55);
-  // (no fill needed — emoji carry their own colour)
-  text(muted ? '🔇' : '🔊',
-       MUTE_BTN.x + MUTE_BTN.w / 2,
-       MUTE_BTN.y + MUTE_BTN.h / 2);
- 
-  pop();}
 }
 
 
@@ -518,4 +493,38 @@ function drawFireflies(opacity = 1.0) {
     pg.ellipse(f.x, f.y, f.size, f.size);
   }
 }
- 
+
+// =============================================================================
+// CREATE MUTE BUTTON
+// Draws the style of the mute button and implement click action
+
+// =============================================================================
+
+function createMuteButton() {
+  let btn = createButton('🔊');
+  btn.parent('scene-container');
+
+  // Use absolute positioning so z-index actually applies, and force the
+  // button above the canvas so it receives the click (not the canvas).
+  btn.style('position', 'absolute');
+  btn.style('left', '12px');
+  btn.style('top', '12px');
+  btn.style('z-index', '1000');         // well above the canvas
+  btn.style('font-size', '24px');
+  btn.style('background', 'rgba(0,0,0,0.45)');
+  btn.style('border', 'none');
+  btn.style('border-radius', '10px');
+  btn.style('padding', '4px 8px');
+  btn.style('cursor', 'pointer');
+
+  btn.mousePressed(() => {
+    console.log('[mute] button clicked');           // ← confirms the click fires
+    if (typeof toggleMute !== 'function') {
+      console.warn('[mute] toggleMute is not defined — check audio-mechanics.js');
+      return;
+    }
+    let muted = toggleMute();
+    console.log('[mute] now muted =', muted);        // ← confirms toggle ran
+    btn.html(muted ? '🔇' : '🔊');
+  });
+}
