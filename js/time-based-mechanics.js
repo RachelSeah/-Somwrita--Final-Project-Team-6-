@@ -83,64 +83,41 @@ function updateClouds() {
 }
 
 
-// =============================================================================
-// UPDATE DAY / NIGHT
-// Called every frame from draw() in sketch.js.
-// Smoothly transitions STATE.dayNight toward 1.0 (night) when fireflies
-// are active, and back toward 0.0 (day) when they are not.
-//
-// STATE.dayNight is read by drawLayer() in sketch.js to set the opacity
-// of day and night SVG versions of each layer.
-// =============================================================================
+const SUN_LAYER_ID  = 'layer-sun';
+const MOON_LAYER_ID = 'layer-moon';
+
 function updateDayNight() {
 
   if (STATE.firefliesActive) {
-    // Health has reached the threshold — transition toward night
-    // min() ensures value never exceeds 1.0
     STATE.dayNight = min(STATE.dayNight + DAY_NIGHT_SPEED, 1.0);
-
   } else {
-    // Not in fireflies state — transition back toward full day
-    // max() ensures value never goes below 0.0
     STATE.dayNight = max(STATE.dayNight - DAY_NIGHT_SPEED, 0.0);
   }
-}
 
+  let t = STATE.dayNight; // 0 = full day, 1 = full night
 
-// =============================================================================
-// UPDATE SUN RISE
-// Called every frame from draw() in sketch.js.
-// On load, returns a y offset that decreases from SUN_RISE_OFFSET to 0
-// over SUN_RISE_DURATION milliseconds, making the sun slowly rise up.
-// Once complete, always returns 0 so there is no ongoing cost.
-//
-// Uses cubic ease-out: starts fast, decelerates as it reaches final position.
-// =============================================================================
-function getSunRiseOffset() {
-
-  // Once the rise is done, return 0 immediately — no more calculation needed
-  if (_sunRiseComplete) return 0;
-
-  // Record the start time on the very first call
-  if (_sunRiseStartTime === null) {
-    _sunRiseStartTime = millis(); // millis() = time in ms since sketch started
+  // ── Sun sets as t goes 0 → 1 ──────────────────────────────
+  // Sun drops down and fades out during transition
+  let sun = document.getElementById(SUN_LAYER_ID);
+  if (sun) {
+    let sunDropY  = t * 400;               // drops 400px as night comes
+    let sunOpacity = max(1 - t * 1.5, 0); // fades out before fully gone
+    sun.style.transform = `translateY(${sunDropY}px)`;
+    sun.style.opacity   = sunOpacity;
   }
 
-  let elapsed  = millis() - _sunRiseStartTime;
-  let progress = constrain(elapsed / SUN_RISE_DURATION, 0, 1);
-
-  // Cubic ease-out: 1 - (1 - progress)^3
-  // At progress=0 → eased=0 (just started)
-  // At progress=1 → eased=1 (fully risen)
-  let eased = 1 - pow(1 - progress, 3);
-
-  // Current y offset: starts at SUN_RISE_OFFSET, approaches 0 as eased → 1
-  let offsetY = SUN_RISE_OFFSET * (1 - eased);
-
-  // Mark as complete once fully risen so this function becomes a no-op
-  if (progress >= 1) _sunRiseComplete = true;
-
-  return offsetY;
+  // ── Moon rises as t goes 0 → 1 ────────────────────────────
+  // Moon starts below scene and rises up, fading in
+  // Only starts moving once t hits 0.3 so sun sets first
+  let moon = document.getElementById(MOON_LAYER_ID);
+  if (moon) {
+    let moonProgress = constrain(map(t, 0.3, 1.0, 0, 1), 0, 1);
+    let moonEased    = 1 - pow(1 - moonProgress, 3); // ease out cubic
+    let moonDropY    = (1 - moonEased) * 400;         // starts 400px below
+    let moonOpacity  = moonProgress;                  // fades in as it rises
+    moon.style.transform = `translateY(${moonDropY}px)`;
+    moon.style.opacity   = moonOpacity;
+  }
 }
 
 // =============================================================================
