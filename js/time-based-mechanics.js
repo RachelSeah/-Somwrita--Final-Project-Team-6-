@@ -224,3 +224,22 @@ function updateBirds() {
     _birds[i].update();
   }
 }
+
+// =============================================================================
+// OCEAN SWAY
+// Moves the ocean layer gently left and right after sketch.js has already
+// set its transform — called at the end of draw() via updateOceanSway().
+// sin() provides natural easing so the motion feels smooth, not mechanical.
+// p5.js functions used: sin(), frameCount
+// =============================================================================
+
+function updateOceanSway() {
+  let ocean = document.getElementById('layer-ocean');
+  if (!ocean) return;
+  let current = ocean.style.transform;
+  // Extract current Y from existing transform so we don't lose it
+  let yMatch = current.match(/translate\([^,]+,\s*([^)]+)\)/);
+  let currentY = yMatch ? yMatch[1] : '-58px';
+  let swayX = sin(frameCount * 0.02) * 8;
+  ocean.style.transform = `translate(${swayX}px, ${currentY})`;
+}
