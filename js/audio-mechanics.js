@@ -36,13 +36,12 @@ function setupSounds() {
   if (_sndCollapse) { _sndCollapse.setLoop(true); _sndCollapse.setVolume(0); }
 
   let ctx = getAudioContext();
-  if (ctx.state === 'running') {
-    _beginPlayback();
-  } else {
-    ctx.onstatechange = function () {
-      if (ctx.state === 'running' && !_audioStarted) _beginPlayback();
-    };
-  }
+
+  ctx.resume().then(() => { _beginPlayback(); });
+
+  ctx.onstatechange = function () {
+    if (ctx.state === 'running' && !_audioStarted) _beginPlayback();
+  };
 
   function _unlockOnGesture() {
     if (_audioStarted) { _removeListeners(); return; }
