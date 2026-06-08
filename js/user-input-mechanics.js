@@ -674,10 +674,10 @@ function drawSpawnedFlowers() {
     if (style === 0) {
       for (let p = 0; p < 5; p++) {
         let angle = (TWO_PI / 5) * p + petalOffset;
-        let petalX = cx + cos(angle) * f.size * 0.5;
-        let petalY = cy + sin(angle) * f.size * 0.5;
+        let petalX = cx + cos(angle) * (f.size + pulse) * 0.5;
+        let petalY = cy + sin(angle) * (f.size + pulse) * 0.5;
         pg.fill(colR, colG, colB, colA);
-        pg.ellipse(petalX, petalY, f.size * 0.55, f.size * 0.55);
+        pg.ellipse(petalX, petalY, (f.size + pulse) * 0.55, (f.size + pulse) * 0.55);
       }
       pg.fill(centreR, centreG, centreB, colA);
       pg.ellipse(cx, cy, f.size * 0.4, f.size * 0.4);
