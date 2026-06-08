@@ -82,7 +82,6 @@ function updateClouds() {
   }
 }
 
-
 const SUN_LAYER_ID  = 'layer-sun';
 const MOON_LAYER_ID = 'layer-moon';
 

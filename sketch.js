@@ -60,7 +60,7 @@ function setup() {
 
   // intialise set up for birds
   if (typeof initBirds === 'function') initBirds();
-}
+} 
 
 
 // =============================================================================
@@ -128,8 +128,9 @@ function draw() {
   clear();
   image(pg, 0, 0, nativeW, nativeH);
 
-  // Draw birds
-  if (typeof updateBirds === 'function') updateBirds();
+    clear();
+  image(pg, 0, 0, nativeW, nativeH);
+  if (typeof updateBirds === 'function') updateBirds(); // ← add this
 }
 
 
