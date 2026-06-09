@@ -10,11 +10,16 @@
 html, body {
   width: 100vw;
   height: 100vh;
-  background: #e8e4de;  /* neutral beige — gallery wall colour */
+  background: #e8e4de;
   overflow: hidden;
+}
+
+body {
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
+  gap: 60px;              
 }
 
 /* ── Wooden frame ─────────────────────────────────────────── */
@@ -95,4 +100,63 @@ html, body {
   left: 0;
   z-index: 1000;
   pointer-events: auto;
+}
+
+/* ── Gallery label beside the frame ────────────────────────── */
+#artwork-label {
+  width: 320px;
+  flex-shrink: 0;                      
+  align-self: center;                 
+  background: #ffffff;                 
+  border: 1px solid #cfc8ba;
+  border-radius: 2px;
+  padding: 34px 30px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);   
+  font-family: Georgia, "Times New Roman", serif;
+  color: #2e2a24;
+}
+
+.label-title {
+  font-size: 30px;
+  font-style: italic;
+  letter-spacing: 0.5px;
+  text-align: left;
+  margin-bottom: 4px;
+}
+
+.label-sub {
+  font-size: 13px;
+  color: #8a8174;
+  text-align: left;
+  margin-bottom: 8px;
+}
+
+/* thin divider rule under the title block, like a real placard */
+.label-sub::after {
+  content: '';
+  display: block;
+  width: 54px;
+  height: 1px;
+  background: #cfc8ba;
+  margin: 16px 0 0;
+}
+
+.label-interactions {
+  list-style: none;
+  font-family: -apple-system, system-ui, sans-serif;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: #4a4439;
+  margin-top: 20px;
+}
+
+.label-interactions li {
+  margin-bottom: 15px;
+}
+
+.label-interactions span {
+  display: block;                      /* action on its own line */
+  font-weight: 700;
+  color: #b5572f;                      /* warm sunset accent */
+  margin-bottom: 2px;
 }
