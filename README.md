@@ -88,6 +88,9 @@ The audio mechanic is the ecosystem's emotional voice, reflecting its living sta
 
 **p5.js functions:** `loadSound()`, `p5.FFT()`, `fft.analyze()`, `fft.getEnergy()`, `p5.Amplitude()`, `amp.getLevel()`, `map()`, `song.play()`, `song.pause()`
 
+
+
+
 (Nishant Reddy)
 
 ---
@@ -146,7 +149,7 @@ Each team member worked on their individual part and common project areas were d
 
 ## AI Acknowledgement
  
-We used **Claude (Anthropic)** during development as a coding assistant — to help understand p5.js functions, debug logic errors and get unstuck on specific implementations. The creative direction, interaction design, visual aesthetic and all mechanic concepts were developed independently by the team.
+We used **Claude (Anthropic)** during development as a coding assistant — to help understand p5.js functions, debug logic errors, generate code snippets, experiment with “vibe coding” approaches, and get unstuck on specific implementations. Some generated code was adapted, edited, and integrated to suit the needs of our project, while other parts were used more directly where appropriate. The creative direction, interaction design, visual aesthetic, and all mechanic concepts were developed independently by the team.
  
 ---
 
@@ -195,3 +198,35 @@ Mechanics - Perlin Noise & Randomness, Shared State Architecture
 ---
 
 **p5.js functions used:** `noise()`, `noiseSeed()`, `random()`, `beginShape()`, `vertex()`, `curveVertex()`, `map()`, `lerp()`, `constrain()`, `millis()`, `sin()`, `cos()`, `atan2()`, `sqrt()`
+
+---
+## Hui Jun Seah (hsea0693) -
+Time based mechanics, and creation of artwork
+---
+
+### Cloud Animation
+- Three clouds move at different speeds using a `for` loop that increments `STATE.cloudOffsets` each frame the  faster clouds feel closer, slower ones feel further away, creating a natural parallax depth effect
+- When a cloud exits the right edge of the scene it wraps back to the left seamlessly, so the drift never stops
+
+### Sun and Moon
+- `STATE.dayNight` is a 0–1 value that controls how far through the day/night transition the scene is `min()` and `max()` make sure it never goes above 1 or below 0
+- As it increases, the sun drops and fades using `pow()` for a cubic ease-out so it decelerates naturally, and the moon rises using `map()` and `constrain()` so it only starts moving once the night scene is mostly visible
+
+### Bird Animation
+- Each bird is an object with its own position, angle, velocity and flap value. The `createVector()` stores the position and `p5.Vector.fromAngle()` moves it forward in the right direction each frame.
+- The flapping motion comes from passing the flap value through `sin()` which moves up and down the wing tip point up and down naturally without any complex physics.
+- **Reference:** Adapted from ziyushi330 —  https://editor.p5js.org/ziyushi330/sketches/e9dob0hJ_
+
+
+### Ocean Sway
+- `sin(frameCount * 0.02)`produces a value that smoothly swings between -1 and 1 over time it is multiplied by 8 to set the pixel distance of how it sways, and applied to the ocean layer's X position each frame so it drifts left and right like a real lake surface breathing.
+
+
+### p5.js Functions Used
+- `min()`, `max()`, `map()`, `constrain()`, `pow()`, `sin()`, `frameCount`, `createVector()`, `p5.Vector.fromAngle()`, `random()`, `triangle()`, `ellipse()`, `noStroke()`, `fill()`
+
+---
+## Artwork Process
+- Designed and painted the original full landscape illustration in **Procreate**, building the scene in layers to plan the depth and separation of each element
+- Manually recreated each of the **35 individual layers** as a clean vector in **Adobe Illustrator**, exporting each one as its own SVG file for both the day and night versions
+- Set up the base project file structure in code where I used ai to help organising the folder system. I manually set the layers and x and y of the layers, to ensure that the image matches the final drawing. So the rest of the team could plug their mechanics straight in without conflicting with each other.
