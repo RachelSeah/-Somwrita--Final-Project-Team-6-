@@ -230,3 +230,41 @@ Time based mechanics, and creation of artwork
 - Designed and painted the original full landscape illustration in **Procreate**, building the scene in layers to plan the depth and separation of each element
 - Manually recreated each of the **35 individual layers** as a clean vector in **Adobe Illustrator**, exporting each one as its own SVG file for both the day and night versions
 - Set up the base project file structure in code where I used ai to help organising the folder system. I manually set the layers and x and y of the layers, to ensure that the image matches the final drawing. So the rest of the team could plug their mechanics straight in without conflicting with each other.
+
+
+
+---
+
+
+
+## Nishant Reddy (nish0595) - 
+Mechanics - Audio
+
+
+---
+
+
+### Audio Mechanics (js/audio-mechanics.js)
+
+- **Ambient crossfade system**: four looping tracks (ambient.mp3, ambient_rain.mp3, night.mp3, ambient_collapse.mp3) all start silently and fade between each other based on STATE.currentState and STATE.rainActive. Each state change triggers a smooth setVolume(target, FADE_TIME) crossfade so transitions never snap.
+- **Stereo pan with mouse**: every ambient track is panned each frame using song.pan(panVal) where panVal is mapped from mouseX across the canvas width — moving the mouse left shifts all audio to the left speaker, right to the right.
+- **FFT bass pulse**: a p5.FFT(0.8, 64) instance analyses the master output every frame. fft.getEnergy('bass') is mapped to a 0–1 value exposed via getBassPulse(), which drawSpawnedFlowers() reads to pulse flower petal size in sync with the beat.
+- **Flower pop sound**: playFlowerPop() plays a short quiet sound on every flower spawn — single click or drag — at a low volume (0.03) so it feels organic without being intrusive.
+- **Fish splash sound**: playFishSplash(fishX) plays when a fish hits the water surface, panned to match the fish's x position on screen so the splash feels spatially grounded.
+- **Browser autoplay handling**: audio is unlocked on the first mousedown, keydown, or touchstart gesture via AudioContext.resume() — ensuring sounds start correctly across all browsers without errors.
+
+
+---
+
+
+### Parallax Effect and Contributions (sketch.js)
+
+- **Mouse-driven layer parallax**: each SVG layer shifts slightly as the mouse moves, with background layers moving less and foreground layers moving more — creating a depth illusion across the flat painting. Implemented by lerping _parallaxX and _parallaxY toward the mapped mouse position each frame and adding a depth-scaled offset to each layer's CSS transform:
+- **Audio initialisation hooks**: added preloadSounds() call in preload() and setupSounds() call in setup() so the audio system initialises correctly in the p5.js lifecycle
+- **Sound update loop**: added updateSound() call inside draw() so crossfading, pan, and FFT bass pulse all update every frame in sync with the rest of the scene
+
+
+---
+
+
+**p5.js functions used:** `loadSound()`, `setLoop()`, `setVolume()`, `pan()`, `play()`, `isPlaying()`, `p5.FFT()`, `getEnergy()`, `getAudioContext()`, `createButton()`, `map()`, `constrain()`, `lerp()`, `analyze()`, `min()`, `max()`,
