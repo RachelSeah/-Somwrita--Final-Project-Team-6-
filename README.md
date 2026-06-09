@@ -157,7 +157,7 @@ We used **Claude (Anthropic)** during development as a coding assistant — to h
 4. **Double-click on the tree areas** (far left or far right of the scene) to form a nest with eggs.
 5. **Press R** to call rain — flowers grow and fish jump from the ocean. Rain lasts ~8 seconds.
 6. **Press X** to introduce damage — trees fade, water darkens, flowers wilt. 
-7. Press X three times to trigger full collapse.
+7. **Press X three times** to trigger full collapse.
 8. **Plant 5 flowers** to earn the dusk/firefly moment — the sky shifts to night and fireflies drift in. This resets and can be triggered again.
 9. **Move the mouse** slowly across the scene to see the parallax depth effect on the landscape layers.
 
