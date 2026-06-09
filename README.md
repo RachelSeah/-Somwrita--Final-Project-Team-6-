@@ -217,7 +217,7 @@ Mechanics - Audio
 - **FFT bass pulse**: a p5.FFT(0.8, 64) instance analyses the master output every frame. fft.getEnergy('bass') is mapped to a 0–1 value exposed via getBassPulse(), which drawSpawnedFlowers() reads to pulse flower petal size in sync with the beat.
 - **Flower pop sound**: playFlowerPop() plays a short quiet sound on every flower spawn — single click or drag — at a low volume (0.03) so it feels organic without being intrusive.
 - **Fish splash sound**: playFishSplash(fishX) plays when a fish hits the water surface, panned to match the fish's x position on screen so the splash feels spatially grounded.
-- - **Browser autoplay handling**: audio is unlocked on the first mousedown, keydown, or touchstart gesture via AudioContext.resume() — ensuring sounds start correctly across all browsers without errors.
+- **Browser autoplay handling**: audio is unlocked on the first mousedown, keydown, or touchstart gesture via AudioContext.resume() — ensuring sounds start correctly across all browsers without errors.
 
 
 ---
