@@ -1,12 +1,11 @@
-// =============================================================================
 // sketch.js — MAIN FILE
-// =============================================================================
-//
+
 // ARCHITECTURE (DOM + p5 hybrid):
 //   SVG layers live in the HTML DOM — rendered as crisp vectors at any res.
 //   p5 canvas is a transparent overlay — draws procedural effects only:
 //     ocean waves, rain, fireflies, spawned flowers, spawned birds.
-//
+
+
 // WHAT THIS FILE DOES:
 //   setup()               → creates transparent p5 canvas over the scene
 //   draw()                → applies CSS to DOM layers + draws procedural effects
@@ -16,8 +15,7 @@
 //   updateFadingTreesCSS  → applies X-key tree fade via CSS opacity
 //   drawRain              → rain particles on canvas (noise.js manages particles)
 //   drawFireflies         → glowing dots on canvas (noise.js manages particles)
-//
-// =============================================================================
+
 
 
 // Native scene dimensions — SVGs and all coordinates use these
@@ -32,19 +30,19 @@ let _parallaxY = 0;   // smoothed mouse parallax offset Y
 
 
 
-// =============================================================================
+
 // PRELOAD — runs once before setup()
 // No SVG loading needed — scene.js handles that via the DOM.
 // Sound loading is disabled until MP3 files are added to assets/sounds/.
-// =============================================================================
+
 function preload() {
   if (typeof preloadSounds === 'function') preloadSounds();
 }
 
 
-// =============================================================================
+
 // SETUP — runs once after preload()
-// =============================================================================
+
 function setup() {
 
   // Create canvas at native scene size and parent it inside scene-container
@@ -66,7 +64,7 @@ function setup() {
 }
 
 
-// =============================================================================
+
 // DRAW — runs ~60 times per second
 //
 // ORDER:
@@ -75,17 +73,17 @@ function setup() {
 //   3. Apply visual effects to DOM SVG layers (CSS)
 //   4. Draw procedural effects to pg (canvas)
 //   5. Render pg onto the transparent main canvas
-// =============================================================================
+
 function draw() {
 
-  // ── 1. WAIT FOR SCENE ───────────────────────────────────────────────────────
+  // ── 1. WAIT FOR SCENE 
   // scene.js builds the DOM asynchronously — don't animate until it's ready
   if (!window._sceneReady) {
     clear();
     return;
   }
 
-  // ── 2. UPDATE STATE ─────────────────────────────────────────────────────────
+  // ── 2. UPDATE STATE 
   STATE.noiseT += 0.005;
 
   if (typeof updateClouds === 'function') updateClouds();
@@ -95,7 +93,7 @@ function draw() {
   if (typeof updateSound === 'function') updateSound();
   _parallaxX = lerp(_parallaxX, map(mouseX, 0, nativeW, -1, 1), 0.05);
   _parallaxY = lerp(_parallaxY, map(mouseY, 0, nativeH, -1, 1), 0.05);
-  // ── 3. APPLY CSS TO DOM LAYERS ──────────────────────────────────────────────
+  // ── 3. APPLY CSS TO DOM LAYERS 
   // SVGs are in the DOM — we animate them via CSS, not by redrawing
 
   // Sway (Perlin noise), cloud drift, sun rise — CSS transform
@@ -113,7 +111,7 @@ function draw() {
   // X key tree fading — CSS opacity on individual tree layers
   updateFadingTreesCSS();
 
-  // ── 4. DRAW PROCEDURAL EFFECTS TO pg ────────────────────────────────────────
+  // ── 4. DRAW PROCEDURAL EFFECTS TO pg 
   pg.clear();
 
   // Draw rain when active OR while still fading out (getRainOpacity > 0)
@@ -132,7 +130,7 @@ function draw() {
   // Draw both sorted by spawnTime — newest always on top, regardless of type
   if (typeof drawAllSpawnablesSorted === 'function') drawAllSpawnablesSorted();
 
-  // ── 5. RENDER pg ONTO TRANSPARENT MAIN CANVAS ───────────────────────────────
+  // ── 5. RENDER pg ONTO TRANSPARENT MAIN CANVAS 
   // clear() makes the main canvas fully transparent so the DOM scene shows through
   clear();
   image(pg, 0, 0, nativeW, nativeH);
@@ -146,11 +144,11 @@ function draw() {
 }
 
 
-// =============================================================================
+
 // UPDATE LAYER TRANSFORMS
 // Applies sway, cloud drift, and sun rise to DOM layer elements via CSS transform.
 // Only updates layers that actually move each frame — static layers are skipped.
-// =============================================================================
+
 function updateLayerTransforms() {
 
   for (let i = 0; i < LAYERS.length; i++) {
@@ -187,18 +185,18 @@ function updateLayerTransforms() {
     if (layer.id === 'ocean') dx += sin(frameCount * 0.01) * 25;
     // Background layers (low i) move less, foreground (high i) move more
     let depth = i / (LAYERS.length - 1);
-    dx += _parallaxX * map(depth, 0, 1, 2, 12);
+    dx += _parallaxX * map(depth, 0, 1, 2, 10);
     dy += _parallaxY * map(depth, 0, 1, 1, 15);
     el.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
   }
 }
 
 
-// =============================================================================
+
 // UPDATE DAY / NIGHT CSS
 // Crossfades between day and night SVG versions by adjusting CSS opacity.
 // STATE.dayNight (0=day, 1=night) is updated by time.js each frame.
-// =============================================================================
+
 function updateDayNightCSS() {
 
   for (let layer of LAYERS) {
@@ -220,7 +218,7 @@ function updateDayNightCSS() {
 }
 
 
-// =============================================================================
+
 // UPDATE NIGHT COLOR CSS
 // Applies per-layer brightness adjustments at night to keep each element
 // visually distinct. No hue changes — original colours are preserved.
@@ -233,7 +231,7 @@ function updateDayNightCSS() {
 //
 //   Values are the target brightness % at full night (t=1).
 //   At t=0 (day) all filters are cleared.
-// =============================================================================
+
 function updateNightColorCSS() {
 
   let t = STATE.dayNight;
@@ -297,7 +295,7 @@ function updateNightColorCSS() {
 }
 
 
-// =============================================================================
+
 // UPDATE TINT CSS
 // Applies health-based colour degradation to tintable layers via CSS filter.
 // STATE.collapseTint (0=healthy, 1=collapsed) is updated by state.js.
@@ -305,7 +303,7 @@ function updateNightColorCSS() {
 // tintGroup 'sky'        → darkens and desaturates (stormy sky)
 // tintGroup 'vegetation' → sepia + darken (dead/dying plants)
 // tintGroup 'water'      → sepia + darken (murky water)
-// =============================================================================
+
 function updateTintCSS() {
 
   let t = STATE.collapseTint;
@@ -347,11 +345,11 @@ function updateTintCSS() {
 }
 
 
-// =============================================================================
+
 // UPDATE FADING TREES CSS
 // Applies CSS opacity to tree layers that are currently fading (X key effect).
 // _fadingTrees array is managed by user-input-mechanics.js.
-// =============================================================================
+
 function updateFadingTreesCSS() {
   if (typeof _fadingTrees === 'undefined') return;
 
@@ -376,7 +374,7 @@ function updateFadingTreesCSS() {
 
 
 
-// =============================================================================
+
 // DRAW RAIN
 // Draws rain as teardrop-shaped filled ellipses on pg.
 //
@@ -395,7 +393,7 @@ function updateFadingTreesCSS() {
 //   p.angle - HALF_PI maps fall direction to ellipse orientation.
 //
 // globalOpacity: 0–1 from getRainOpacity() — drives smooth fade in/out.
-// =============================================================================
+
 function drawRain(globalOpacity = 1.0) {
 
   let particles = (typeof getRainParticles === 'function')
@@ -454,7 +452,7 @@ function drawRain(globalOpacity = 1.0) {
     pg.pop();
   }
 
-  // ── Three clipped passes, back-to-front ──────────────────────────────────
+  // ── Three clipped passes, back-to-front 
   for (let d = 0; d < 4; d++) {
 
     if (d < 3) {
@@ -476,11 +474,11 @@ function drawRain(globalOpacity = 1.0) {
 }
 
 
-// =============================================================================
+
 // DRAW FIREFLIES
 // Draws glowing firefly dots on pg.
 // Positions and brightness come from noise.js (getFireflies).
-// =============================================================================
+
 // opacity parameter (0–1) comes from noise.js getFireflyOpacity()
 // and drives the global fade in/out effect
 function drawFireflies(opacity = 1.0) {

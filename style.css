@@ -45,6 +45,7 @@ html, body {
   position: relative;
   width: 1455px;
   height: 1087px;
+  overflow: hidden;
 }
 
 /* The SVG scene — all SVG layers live inside here */
