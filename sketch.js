@@ -120,6 +120,9 @@ function draw() {
   let rOpacity = (typeof getRainOpacity === 'function') ? getRainOpacity() : 0;
   if (rOpacity > 0) drawRain(rOpacity);
 
+  // Draw fish during rain (spawns only while rainActive; finishes existing arcs after)
+  if (typeof drawFish === 'function') drawFish();
+
   // Draw fireflies when active OR while still fading out (_fireflyOpacity > 0)
   let fOpacity = (typeof getFireflyOpacity === 'function') ? getFireflyOpacity() : 0;
   if (fOpacity > 0) drawFireflies(fOpacity);

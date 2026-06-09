@@ -68,6 +68,7 @@ function initNoise() {
 
   initFireflies();
   initRain();
+  initFish();
 }
 
 
@@ -84,6 +85,12 @@ function updateNoise() {
   // updateRain runs whenever there is any visible rain (active OR fading out).
   // It handles its own early-exit once _rainOpacity fully reaches 0.
   if (STATE.rainActive || _rainOpacity > 0) updateRain();
+
+  // updateFish is called every frame (not just during rain) so that
+  // _prevRainActive always tracks STATE.rainActive correctly.
+  // Without this, _prevRainActive gets stuck at true when rain ends while
+  // _fishArr is empty — causing the next R press to never detect the transition.
+  updateFish();
 }
 
 
@@ -463,6 +470,200 @@ function getRainParticles() {
 // even while it's fading out after STATE.rainActive becomes false.
 function getRainOpacity() {
   return _rainOpacity;
+}
+
+
+
+// =============================================================================
+// FISH — jump from ocean surface during rain
+//
+// HOW IT WORKS:
+//   Each R press queues 2 or 3 fish for that rain event, staggered in time.
+//   Each fish spawns from one of two open-water zones (different x and y ranges),
+//   follows a sin(PI*t) parabola from surface to peak and back, then splashes.
+//
+//   TWO ZONES (each stores its own surface y and canvas clip range):
+//     Zone 1: x=400–700,  y=500–650  (surfaceY=635)
+//     Zone 2: x=800–950,  y=700–850  (surfaceY=835)
+//
+//   COLOURS: blue, orange-yellow, or light-red — picked randomly per fish.
+//
+//   CLIPPING: per-fish drawingContext clip keeps each fish inside its zone's
+//   y range so it never overlaps foreground hills, trees, or far sky.
+//
+//   BUG FIX — always call updateFish every frame (not only during rain):
+//   If called only when STATE.rainActive or _fishArr.length > 0, _prevRainActive
+//   gets stuck at true when rain ends with no fish left — the next R press then
+//   never sees the false→true transition and no fish spawn.
+//
+// p5.js functions used: sin(), PI, cos(), random(), millis(), map(), HALF_PI
+// =============================================================================
+
+// Two open-water spawn zones — each carries its own surface y and clip bounds
+const FISH_ZONES = [
+  { xMin: 400, xMax: 700, surfaceY: 635, clipTop: 500, clipBot: 655 },
+  { xMin: 800, xMax: 950, surfaceY: 835, clipTop: 700, clipBot: 855 }
+];
+
+let _fishArr        = [];
+let _fishBudget     = 0;      // fish still to spawn this rain event (2 or 3)
+let _nextFishTime   = 0;      // millis() timestamp for next spawn
+let _prevRainActive = false;  // tracks rain state each frame to detect R press transition
+
+// Called once from initNoise() — resets fish system on load
+function initFish() {
+  _fishArr        = [];
+  _fishBudget     = 0;
+  _nextFishTime   = 0;
+  _prevRainActive = false;
+}
+
+// Called EVERY frame from updateNoise() — must run even when no rain/fish
+// so that _prevRainActive always reflects the last known STATE.rainActive.
+function updateFish() {
+  let now = millis();
+
+  // Detect fresh rain press (false → true transition) → set budget for this event
+  if (STATE.rainActive && !_prevRainActive) {
+    _fishBudget   = floor(random(2, 4));    // 2 or 3 fish per rain press
+    _nextFishTime = now + random(400, 900); // short delay before first fish
+  }
+  _prevRainActive = STATE.rainActive;  // always updated — this is the fix
+
+  // Spawn next queued fish with staggered delays
+  if (_fishBudget > 0 && now > _nextFishTime) {
+    let zone = FISH_ZONES[floor(random(FISH_ZONES.length))];
+
+    // Pick colour randomly: 0=blue, 1=orange-yellow, 2=light-red
+    let colStyle = floor(random(3));
+    let r, g, b;
+    if (colStyle === 0) {
+      r = random(130, 190); g = random(185, 225); b = random(210, 245); // blue
+    } else if (colStyle === 1) {
+      r = random(220, 255); g = random(150, 200); b = random(50,  100); // orange-yellow
+    } else {
+      r = random(220, 255); g = random(100, 150); b = random(100, 150); // light red
+    }
+
+    _fishArr.push({
+      x:        random(zone.xMin, zone.xMax),
+      surfaceY: zone.surfaceY,   // each fish knows its own water surface
+      clipTop:  zone.clipTop,    // and its own canvas clip bounds
+      clipBot:  zone.clipBot,
+      t:        0,               // arc progress: 0=surface, 0.5=peak, 1=back
+      speed:    random(0.016, 0.026),
+      jumpH:    random(60, 125), // peak height above surface in px
+      tiltMult: random(0.25, 0.85),
+      facing:   random() < 0.5 ? 1 : -1,  // 1=right, -1=left
+      size:     random(18, 30),
+      r, g, b,
+      phase:    'jumping',
+      splashT:  0,
+      drops:    []
+    });
+    _fishBudget--;
+    _nextFishTime = now + random(1200, 2800);
+  }
+
+  // Advance each fish's animation
+  for (let i = _fishArr.length - 1; i >= 0; i--) {
+    let f = _fishArr[i];
+
+    if (f.phase === 'jumping') {
+      f.t += f.speed;
+
+      if (f.t >= 1.0) {
+        f.phase   = 'splashing';
+        f.splashT = 0;
+        f.drops   = [];
+        for (let d = 0; d < 8; d++) {
+          let ang = random(-PI + 0.4, -0.4);
+          let spd = random(1.2, 3.5);
+          f.drops.push({
+            x: f.x, y: f.surfaceY,
+            vx: cos(ang) * spd,
+            vy: sin(ang) * spd,
+            life: 1.0
+          });
+        }
+      }
+
+    } else if (f.phase === 'splashing') {
+      f.splashT += 0.05;
+      for (let d of f.drops) {
+        d.x  += d.vx;
+        d.y  += d.vy;
+        d.vy += 0.18;
+        d.life -= 0.06;
+      }
+      if (f.splashT >= 1.0) _fishArr.splice(i, 1);
+    }
+  }
+}
+
+// Called every frame from sketch.js — draws fish and splashes onto pg
+function drawFish() {
+  if (_fishArr.length === 0) return;
+
+  for (let f of _fishArr) {
+
+    if (f.phase === 'jumping') {
+      let arcY = f.surfaceY - sin(PI * f.t) * f.jumpH;
+      if (arcY >= f.surfaceY) continue;
+
+      // Tilt forward on ascent, backward on descent.
+      // Negated for left-facing fish: scale(-1,1) reverses rotation direction,
+      // so without negation the nose dips down on ascent instead of pointing up.
+      let tilt = map(f.t, 0, 1, -HALF_PI * f.tiltMult, HALF_PI * f.tiltMult);
+      if (f.facing === -1) tilt = -tilt;
+
+      // Per-fish clip — keeps fish inside its zone's y range
+      pg.drawingContext.save();
+      pg.drawingContext.beginPath();
+      pg.drawingContext.rect(0, f.clipTop, nativeW, f.clipBot - f.clipTop);
+      pg.drawingContext.clip();
+
+      pg.push();
+      pg.translate(f.x, arcY);
+      pg.rotate(tilt);
+      pg.scale(f.facing, 1);  // mirrors horizontally for left-facing fish
+      pg.noStroke();
+
+      // Body
+      pg.fill(f.r, f.g, f.b, 225);
+      pg.ellipse(0, 0, f.size, f.size * 0.45);
+
+      // Tail
+      pg.fill(f.r * 0.8, f.g * 0.8, f.b, 210);
+      pg.triangle(
+        -f.size * 0.48,  0,
+        -f.size * 0.82, -f.size * 0.30,
+        -f.size * 0.82,  f.size * 0.30
+      );
+
+      // Eye
+      pg.fill(15, 15, 35, 230);
+      pg.ellipse(f.size * 0.27, -f.size * 0.05, f.size * 0.11, f.size * 0.11);
+
+      pg.pop();
+      pg.drawingContext.restore();
+    }
+
+    // Splash drops — clipped to same zone as the fish
+    if (f.drops.length > 0) {
+      pg.drawingContext.save();
+      pg.drawingContext.beginPath();
+      pg.drawingContext.rect(0, f.clipTop, nativeW, f.clipBot - f.clipTop);
+      pg.drawingContext.clip();
+      pg.noStroke();
+      for (let d of f.drops) {
+        if (d.life <= 0) continue;
+        pg.fill(190, 220, 255, d.life * 185);
+        pg.ellipse(d.x, d.y, 3.5, 3.5);
+      }
+      pg.drawingContext.restore();
+    }
+  }
 }
 
 
