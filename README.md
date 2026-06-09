@@ -88,6 +88,9 @@ The audio mechanic is the ecosystem's emotional voice, reflecting its living sta
 
 **p5.js functions:** `loadSound()`, `p5.FFT()`, `fft.analyze()`, `fft.getEnergy()`, `p5.Amplitude()`, `amp.getLevel()`, `map()`, `song.play()`, `song.pause()`
 
+
+
+
 (Nishant Reddy)
 
 ---
