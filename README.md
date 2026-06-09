@@ -245,6 +245,13 @@ Mechanics - Audio
 
 - **Mouse-driven layer parallax**: each SVG layer shifts slightly as the mouse moves, with background layers moving less and foreground layers moving more, creating a depth illusion across the flat painting. Implemented by lerping _parallaxX and _parallaxY toward the mapped mouse position each frame and adding a depth-scaled offset to each layer's CSS transform:
 - **Note**: The parallax effect was not covered in class. I researched and learned this technique from online resources and implemented it myself into the project. It was inspired by how real parallax websites create a sense of depth by moving background and foreground elements at different speeds relative to mouse position.
+- **References**
+- CSS Tricks — Parallax scrolling with CSS variables
+https://css-tricks.com/parallax-scrolling-css-variables/
+- MDN Web Docs — Using CSS transforms
+https://developer.mozilla.org/en-US/docs/Web/CSS/transform
+- YouTube — Parallax Effect with JavaScript
+https://www.youtube.com/results?search_query=parallax+effect+javascript+mouse+movement
 - **Audio initialisation hooks**: added preloadSounds() call in preload() and setupSounds() call in setup() so the audio system initialises correctly in the p5.js lifecycle
 - **Sound update loop**: added updateSound() call inside draw() so crossfading, pan, and FFT bass pulse all update every frame in sync with the rest of the scene
 
