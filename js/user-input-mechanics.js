@@ -1,4 +1,5 @@
 // Claude helped structure the keyboard/mouse event handlers and the spawned-object array management in this file — the interaction design and all creative choices were developed independently.
+// Claude also helped with writing the comments to help better understand the code
 // =============================================================================
 // js/user-input-mechanics.js
 // =============================================================================
@@ -12,29 +13,14 @@
 //   drawSpawnedFlowers() → draws all active spawned flower objects
 //   drawSpawnedBirds()   → draws all active spawned bird objects
 //
-// WHAT THIS FILE CALLS:
-//   addHealth()          → from state.js, for every positive action
-//   subtractHealth()     → from state.js, for every negative action
-//   triggerCollapse()    → from state.js, when X pressed 3 times
-//   triggerRain()        → from state.js, when R key pressed
-//   stopRain()           → from state.js, when rain duration ends
-//
-// USER ACTIONS AND THEIR EFFECTS:
-//   Click on grass area    → flower grows (+10 health)
-//   Click + drag on grass  → seed trail → wildflower path blooms (+10 health)
-//   Double click a tree    → bird nest forms, 1-2 birds arrive (+10 health)
-//   Press R key            → rain shower, flowers + trees grow (+10 health)
-//   Press X key            → 1-2 trees fade, flowers fade, water darkens (-10 health)
-//   Press X key 3 times    → collapse state triggers
-//
 // =============================================================================
 
 const TRAIL_POINT_SPACING = 30;   // min px between recorded drag points
-const FLOWER_SPACING = 55;   // target px between blooms along the trail
-const FLOWER_MIN_GAP = 42;   // reject a bloom closer than this to another
-const TRAIL_MIN_LENGTH = 80;   // total drag must exceed this to bloom a trail
-const TRAIL_JITTER = 26;   // sideways scatter off the path centre-line
-const CLICK_MIN_GAP = 50;   // min px between a new clicked flower and any other
+const FLOWER_SPACING = 55;        // target px between blooms along the trail
+const FLOWER_MIN_GAP = 42;        // reject a bloom closer than this to another
+const TRAIL_MIN_LENGTH = 80;      // total drag must exceed this to bloom a trail
+const TRAIL_JITTER = 26;          // sideways scatter off the path centre-line
+const CLICK_MIN_GAP = 50;         // min px between a new clicked flower and any other
 
 // ── VALID FLOWER ZONES ────────────────────────────────────────────────────────
 // Each zone is the visible bounding box of one hill/ground SVG asset,
@@ -65,27 +51,10 @@ function isTooCloseToFlower(x, y, gap = CLICK_MIN_GAP) {
   return _spawnedFlowers.some(f => dist(x, y, f.x, f.y) < gap);
 }
 
-// Returns a plantable point near (x, y) that isn't clustered, or null if the
-// area is too crowded. Tries the exact point first, then rings outward.
+// Returns the click point if it's clear of other flowers, or null if too close.
+// Makes sure that no flowers are overlapping one another.
 function findFreePlantSpot(x, y, gap = CLICK_MIN_GAP) {
-  // 1. Exact click point is clear → use it.
-  if (!isTooCloseToFlower(x, y, gap)) return { x, y };
-
-  // 2. Try positions on expanding rings around the click.
-  for (let attempt = 0; attempt < 12; attempt++) {
-    let radius = gap * (1 + attempt * 0.25);     // grows each attempt
-    let ang = random(0, TWO_PI);
-    let nx = x + cos(ang) * radius;
-    let ny = y + sin(ang) * radius;
-
-    // Must stay on a valid flower zone AND be clear of other flowers.
-    if (getFlowerZone(nx, ny) && !isTooCloseToFlower(nx, ny, gap)) {
-      return { x: nx, y: ny };
-    }
-  }
-
-  // 3. No room nearby → skip this click.
-  return null;
+  return isTooCloseToFlower(x, y, gap) ? null : { x, y };
 }
 
 // ── SPAWNED FLOWERS ───────────────────────────────────────────────────────────
@@ -113,15 +82,16 @@ let _fadingTrees = [];
 
 // ── RAIN TIMER ────────────────────────────────────────────────────────────────
 // Rain runs for a fixed duration then stops automatically.
-const RAIN_DURATION = 8000;   // milliseconds (8 seconds of rain)
+const RAIN_DURATION = 3000;   // milliseconds (3 seconds of rain)
 let _rainStartTime = null;
 
 
 // =============================================================================
-// COORDINATE CONVERSION
+// COORDINATE CONVERSION (PLACEHOLDER FOR CANVAS SCALING)
 // The p5 canvas is fixed at nativeW x nativeH (1455 x 1087) and positioned
-// directly over the scene — no scaling. So p5's mouseX/mouseY are already
+// directly over the scene. There is no scaling needed. So p5's mouseX/mouseY are already
 // in scene coordinates. No conversion needed.
+// This code is a placeholder for if we do need to scale the canvas in the future.
 // =============================================================================
 function screenToScene(screenX, screenY) {
   return { x: screenX, y: screenY };
@@ -194,7 +164,7 @@ function mousePressed() {
     }
   }
 
-  // Start drag tracking — only seed the first point if it's on valid grass.
+  // Start drag tracking, only seed the first point if it's on valid grass.
   _isDragging = true;
   _dragPoints = zone ? [{ x: scene.x, y: scene.y, small: zone.smallFlowers }] : [];
 }
@@ -315,7 +285,7 @@ function keyPressed() {
 //
 // FLOWER STYLES:
 //   style 0 (60%) — rounded ellipse petals, 5 petals. Current look.
-//   style 1 (25%) — triangular petals (4–6), Perlin-noise angle wobble.
+//   style 1 (25%) — triangular petals (4–6), Perlin-noise angle.
 //   style 2 (15%) — dandelion: many thin spokes with seed-head tips,
 //                   each spoke length and angle varied by noise each frame.
 //
@@ -355,12 +325,12 @@ function spawnFlower(x, y, sizeMult = 1.0) {
     // Style metadata — used in drawSpawnedFlowers()
     style: style,
     petalOffset: random(TWO_PI),          // random rotation so no two flowers align
-    petalCount: style === 1             // triangular: 4–6 petals
-      ? floor(random(4, 7))             //  dandelion: 14–20 spokes
-      : floor(random(14, 21)),
-    petalSeed: random(10000),           // noise seed for per-petal organic wobble
-    swayT: random(10000),           // unique noise seed for stem sway animation
-    stemCurve: random(-3.5, 3.5),       // natural lean offset for the bezier control point
+    petalCount: style === 1
+      ? floor(random(4, 7))               // style 1 (triangular): 4–6 petals
+      : floor(random(14, 21)),            // style 2 (dandelion): 14–20 spokes
+    petalSeed: random(10000),             // noise seed for per-petal organic wobble
+    swayT: random(10000),                 // unique noise seed for stem sway animation
+    stemCurve: random(-3.5, 3.5),         // natural lean offset for the bezier control point
   });
 }
 
@@ -373,10 +343,10 @@ function spawnFlower(x, y, sizeMult = 1.0) {
 function bloomTrailFlowers(points) {
   if (points.length < 2) return;
 
-  let placed = [];   // {x, y} of blooms accepted so far (overlap test)
+  let placed = [];     // {x, y} of blooms accepted so far (overlap test)
   let distSoFar = 0;   // distance walked along the path
-  let nextAt = 0;   // distance at which to drop the next bloom
-  let order = 0;   // sequence index → staggers the bloom timing
+  let nextAt = 0;      // distance at which to drop the next bloom
+  let order = 0;       // sequence index → staggers the bloom timing
 
   for (let i = 1; i < points.length; i++) {
     let a = points[i - 1];
@@ -387,7 +357,7 @@ function bloomTrailFlowers(points) {
     // Unit vector along this segment, and its perpendicular (for sideways jitter)
     let ux = (b.x - a.x) / segLen;
     let uy = (b.y - a.y) / segLen;
-    let px = -uy;   // perpendicular
+    let px = -uy;     
     let py = ux;
 
     // Step along the segment dropping a bloom each time we pass `nextAt`.
@@ -501,7 +471,7 @@ function spawnBirdNest(x, y) {
 // Handles rain timer, tree fading, and flower lifecycle (grow/fade/remove).
 // Drawing is handled separately by drawOneFlower() so z-order can be respected.
 // =============================================================================
-function drawSpawnedFlowers() {   // kept as original name so sketch.js call still works
+function drawSpawnedFlowers() {   
 
   // Check rain timer — stop rain after RAIN_DURATION
   if (STATE.rainActive && _rainStartTime !== null) {
@@ -529,7 +499,7 @@ function drawSpawnedFlowers() {   // kept as original name so sketch.js call sti
     }
   }
 
-  // Flower lifecycle — grow, fade, remove (no drawing here)
+  // Flower lifecycle — grow, fade, remove 
   for (let i = _spawnedFlowers.length - 1; i >= 0; i--) {
     let f = _spawnedFlowers[i];
     if (f.alive && f.size < f.targetSize) f.size += f.growSpeed;
@@ -537,7 +507,7 @@ function drawSpawnedFlowers() {   // kept as original name so sketch.js call sti
     if (f.opacity <= 0) { _spawnedFlowers.splice(i, 1); }
   }
 
-  // Nest lifecycle — grow, fade, remove (no drawing here)
+  // Nest lifecycle — grow, fade, remove 
   for (let i = _birdNests.length - 1; i >= 0; i--) {
     let nest = _birdNests[i];
     nest.age++;
@@ -550,7 +520,7 @@ function drawSpawnedFlowers() {   // kept as original name so sketch.js call sti
 
 
 // =============================================================================
-// DRAW ONE FLOWER  (extracted from the old draw loop)
+// DRAW ONE FLOWER  
 // =============================================================================
 function _drawOneFlower(f) {
   if (f.opacity <= 0) return;
@@ -632,9 +602,9 @@ function _drawOneFlower(f) {
     pg.beginShape();
     pg.vertex(f.x, f.y);                            // fixed ground base — never moves
     pg.quadraticVertex(
-      f.x + swayX * 0.5 + (f.stemCurve || 0),      // control x: mid sway + natural lean
-      f.y - f.size * 0.55,                           // control y: slightly above midpoint
-      cx, cy                                          // swayed flower head
+      f.x + swayX * 0.5 + (f.stemCurve || 0),       // control x: mid sway + natural lean
+      f.y - f.size * 0.55,                          // control y: slightly above midpoint
+      cx, cy                                        // swayed flower head
     );
     pg.endShape();
     pg.noStroke();
@@ -709,8 +679,7 @@ function _drawOneFlower(f) {
       pg.fill(centreR, centreG, centreB, colA * 0.85);
       pg.ellipse(cx, cy, f.size * 0.14, f.size * 0.14);
     }
-}   // end _drawOneFlower
-
+  }
 
 // =============================================================================
 // DRAW ONE NEST + COMBINED Z-SORTED DRAW
@@ -726,11 +695,13 @@ function _drawOneNest(nest) {
   let ns = nest.noiseSeed;
   let nt = STATE.noiseT;
 
-  let owR = lerp(98,  60, dn), owG = lerp(60, 38, dn), owB = lerp(22, 14, dn);
-  let ihR = lerp(52,  32, dn), ihG = lerp(30, 19, dn), ihB = lerp(10,  6, dn);
-  let tgR = lerp(62,  38, dn), tgG = lerp(36, 22, dn), tgB = lerp(12,  7, dn);
-  let rmR = lerp(120, 75, dn), rmG = lerp(78, 50, dn), rmB = lerp(28, 18, dn);
-  let egR = lerp(238, 170, dn), egG = lerp(228, 162, dn), egB = lerp(210, 148, dn);
+// Nest colours — each lerps from its day value toward a darker night value (dn).
+// ow = outer wall, ih = inner hollow, tg = twigs, rm = rim, eg = eggs
+  let owR = lerp(98, 60, dn),  owG = lerp(60, 38, dn),  owB = lerp(22, 14, dn);     // outer wall
+  let ihR = lerp(52, 32, dn),  ihG = lerp(30, 19, dn),  ihB = lerp(10, 6, dn);      // inner hollow
+  let tgR = lerp(62, 38, dn),  tgG = lerp(36, 22, dn),  tgB = lerp(12, 7, dn);      // twigs
+  let rmR = lerp(120, 75, dn), rmG = lerp(78, 50, dn),  rmB = lerp(28, 18, dn);     // rim
+  let egR = lerp(238, 170, dn), egG = lerp(228, 162, dn), egB = lerp(210, 148, dn); // eggs
 
   const RX = s * 0.75, RY = s * 0.54;
   const IX = s * 0.44, IY = s * 0.32;
