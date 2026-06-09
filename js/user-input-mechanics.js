@@ -168,26 +168,30 @@ function mousePressed() {
   if (typeof startAudio === 'function') startAudio();
   let scene = screenToScene(mouseX, mouseY);
 
+  // ── Nest zones are for bird nests (double-click) only ─────────────────────
+  // Bail out before planting so a double-click here can't leave flowers behind.
+  if (isOnTree(scene.x, scene.y)) {
+    _isDragging = false;   // don't start a drag trail from a nest zone either
+    _dragPoints = [];
+    return;
+  }
+
   let zone = getFlowerZone(scene.x, scene.y);
   if (zone) {
     // Find a free, non-overlapping spot near the click.
     let spot = findFreePlantSpot(scene.x, scene.y);
 
     if (spot) {
-      // Re-check the zone at the (possibly nudged) spot so size matches the
-      // hill it actually lands on.
       let spotZone = getFlowerZone(spot.x, spot.y) || zone;
       spawnFlower(spot.x, spot.y, spotZone.smallFlowers ? 0.5 : 1.0);
       addHealth();
 
-      // Count this flower click — night/fireflies triggers after 5
       STATE.flowerClickCount++;
       if (STATE.flowerClickCount >= FLOWER_CLICK_THRESHOLD &&
         STATE.currentState !== 'COLLAPSE') {
         triggerFireflies();
       }
     }
-    // else: area too crowded → no flower, no health. Click simply does nothing.
   }
 
   // Start drag tracking — only seed the first point if it's on valid grass.
