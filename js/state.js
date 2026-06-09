@@ -1,12 +1,15 @@
 // js/state.js
 
+// Claude was used to refine code written for the designed logic 
+// Claude was used to write detailed comments for easier code understanding.
+
 /* PURPOSE:
    This file is the single source of truth for the artwork's current
    condition. Every other file reads from STATE to know what's happening
    and what to draw.
  */
 
-   /*
+  /* LOGIC of file idea-
    Think of STATE as the "memory" of the artwork:
    - How healthy is the scene right now?
    - Is it day or night?
@@ -15,16 +18,13 @@
 */
 
 /*
- HOW OTHER FILES USE THIS:
+ HOW sketch.js USES THIS:
    sketch.js        → reads STATE.health to calculate tint colours
                       reads STATE.dayNight to blend day/night layers
                       reads STATE.firefliesActive to draw fireflies
-   user_interaction → calls addHealth() and subtractHealth()
-                      increments STATE.xPressCount on X key press
-   noise.js         → reads STATE.noiseT each frame for sway animation
-   time.js          → updates STATE.dayNight and STATE.cloudOffsets
-   sound.js         → reads STATE.currentState to play correct audio
+*/
 
+/*
  RULE: Only change values in this file through the functions below.
    Never write STATE.health = 50 directly from another file.
    Always use addHealth() or subtractHealth() so the state
