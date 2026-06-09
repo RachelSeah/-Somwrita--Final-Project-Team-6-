@@ -1,27 +1,15 @@
-// Claude helped design the rain particle system architecture and the Perlin noise sampling approach used in this file — the mechanic concept, tuning, and creative decisions were made independently.
-// =============================================================================
+// Claude was used to help design the rain particle system architecture and the Perlin noise sampling approach used in this file.
+// Claude was used to write detailed comments for easier code understanding.
+// The mechanic concept, tuning and creative decisions were made independently.
 // js/perlin-noise-randomness-mechanics.js
 // =============================================================================
 //
-// PURPOSE:
-//   Contains ALL Perlin noise and randomness logic for the artwork.
-//   This file calculates — it never draws anything directly.
-//   sketch.js calls functions from this file to get values, then draws with them.
-
-//   Example:
-//     noise(0.5, 0.0) → 0.61
-//     noise(0.5, 0.1) → 0.63   ← changes slowly and smoothly
-//     noise(0.5, 0.2) → 0.58
-//
-// FUNCTIONS IN THIS FILE:
-//   initNoise()          → sets up all particle systems (called once in setup)
-//   updateNoise()        → advances all animations each frame (called in draw)
-//   getSwayOffset(layer) → returns {dx, dy} sway for a layer using noise()
-//   getWavePoints(index) → returns wave surface points for ocean using noise()
-//   getFireflies()       → returns firefly array (positions updated by noise)
-//   getRainParticles()   → returns rain particle array (positions updated by noise)
-//
-// =============================================================================
+/* PURPOSE:
+   Includes ALL Perlin noise and randomness logic for the artwork.
+   This file calculates, gives logic - it never draws anything directly.
+   Other js files like user-input-mechanics.js, state.js, time-based-mechanics.js, etc use the logic and functions from this file.
+   sketch.js calls functions from this file to get values and then draws with them.
+*/
 
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────

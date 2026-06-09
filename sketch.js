@@ -61,6 +61,9 @@ function setup() {
 
   // intialise set up for birds
   if (typeof initBirds === 'function') initBirds();
+
+  //setting up a mute button
+  createMuteButton();
 }
 
 
@@ -505,4 +508,33 @@ function drawFireflies(opacity = 1.0) {
     pg.fill(240, 255, 190, b);
     pg.ellipse(f.x, f.y, f.size, f.size);
   }
+}
+
+function createMuteButton() {
+  let btn = createButton('🔊');
+  btn.parent('scene-container');
+
+  // Use absolute positioning so z-index actually applies, and force the
+  // button above the canvas so it receives the click (not the canvas).
+  btn.style('position', 'absolute');
+  btn.style('left', '12px');
+  btn.style('top', '12px');
+  btn.style('z-index', '1000');         // well above the canvas
+  btn.style('font-size', '24px');
+  btn.style('background', 'rgba(0,0,0,0.45)');
+  btn.style('border', 'none');
+  btn.style('border-radius', '10px');
+  btn.style('padding', '4px 8px');
+  btn.style('cursor', 'pointer');
+
+  btn.mousePressed(() => {
+    console.log('[mute] button clicked');           // ← confirms the click fires
+    if (typeof toggleMute !== 'function') {
+      console.warn('[mute] toggleMute is not defined — check audio-mechanics.js');
+      return;
+    }
+    let muted = toggleMute();
+    console.log('[mute] now muted =', muted);        // ← confirms toggle ran
+    btn.html(muted ? '🔇' : '🔊');
+  });
 }

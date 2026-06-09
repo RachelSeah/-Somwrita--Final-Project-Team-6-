@@ -1,4 +1,5 @@
 /* style.css */
+/*Claude was used to write detailed comments for easier code understanding.*/
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -6,20 +7,33 @@
   padding: 0;
 }
 
+/* Single responsive scale factor.
+   JS (in index.html) updates --scale to fit the artwork to the window.
+   Everything below sizes itself off this variable, so the layout and the
+   1455x1087 coordinate space stay identical — only the on-screen size changes. */
+:root {
+  --scale: 1;
+}
+
 html, body {
   width: 100vw;
   height: 100vh;
-  background: #e8e4de;  /* neutral beige — gallery wall colour */
+  background: #e8e4de;
   overflow: hidden;
+}
+
+body {
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
+  gap: calc(60px * var(--scale));
 }
 
 /* ── Wooden frame ─────────────────────────────────────────── */
 #frame {
   position: relative;
-  padding: 20px;
+  padding: calc(20px * var(--scale));
   background: #5c3d1e;              /* dark wood brown */
   box-shadow:
     inset  2px  2px 0px #7a5230,   /* top-left light bevel */
@@ -32,7 +46,7 @@ html, body {
 #frame::before {
   content: '';
   position: absolute;
-  inset: 8px;
+  inset: calc(8px * var(--scale));
   border: 2px solid #3d2610;
   box-shadow: inset 1px 1px 0 #7a5230;
   pointer-events: none;
@@ -42,12 +56,15 @@ html, body {
 /* Container holds both the SVG DOM scene and the p5 canvas overlay */
 #scene-container {
   position: relative;
-  width: 1455px;
-  height: 1087px;
+  width: calc(1455px * var(--scale));
+  height: calc(1087px * var(--scale));
   overflow: hidden;
 }
 
-/* The SVG scene — all SVG layers live inside here */
+/* The SVG scene — all SVG layers live inside here.
+   Kept at its native 1455x1087 coordinate space and scaled with a transform
+   so the per-layer translate() offsets (sway/parallax, in native px) scale
+   proportionally — behaviour is unchanged, only the rendered size differs. */
 #scene {
   position: absolute;
   top: 0;
@@ -55,6 +72,8 @@ html, body {
   width: 1455px;
   height: 1087px;
   overflow: hidden;
+  transform: scale(var(--scale));
+  transform-origin: top left;
 }
 
 /* Each layer div stacks absolutely on top of previous */
@@ -94,4 +113,63 @@ html, body {
   left: 0;
   z-index: 1000;
   pointer-events: auto;
+}
+
+/* ── Gallery label beside the frame ────────────────────────── */
+#artwork-label {
+  width: calc(320px * var(--scale));
+  flex-shrink: 0;
+  align-self: center;
+  background: #ffffff;
+  border: 1px solid #cfc8ba;
+  border-radius: 2px;
+  padding: calc(34px * var(--scale)) calc(30px * var(--scale));
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
+  font-family: Georgia, "Times New Roman", serif;
+  color: #2e2a24;
+}
+
+.label-title {
+  font-size: calc(30px * var(--scale));
+  font-style: italic;
+  letter-spacing: 0.5px;
+  text-align: left;
+  margin-bottom: calc(4px * var(--scale));
+}
+
+.label-sub {
+  font-size: calc(13px * var(--scale));
+  color: #8a8174;
+  text-align: left;
+  margin-bottom: calc(8px * var(--scale));
+}
+
+/* thin divider rule under the title block, like a real placard */
+.label-sub::after {
+  content: '';
+  display: block;
+  width: calc(54px * var(--scale));
+  height: 1px;
+  background: #cfc8ba;
+  margin: calc(16px * var(--scale)) 0 0;
+}
+
+.label-interactions {
+  list-style: none;
+  font-family: -apple-system, system-ui, sans-serif;
+  font-size: calc(14.5px * var(--scale));
+  line-height: 1.45;
+  color: #4a4439;
+  margin-top: calc(20px * var(--scale));
+}
+
+.label-interactions li {
+  margin-bottom: calc(15px * var(--scale));
+}
+
+.label-interactions span {
+  display: block;                      /* action on its own line */
+  font-weight: 700;
+  color: #b5572f;                      /* warm sunset accent */
+  margin-bottom: calc(2px * var(--scale));
 }

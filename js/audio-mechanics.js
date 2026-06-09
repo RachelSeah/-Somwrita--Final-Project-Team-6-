@@ -29,6 +29,7 @@ let _sndFishSplash = null;
 
 let _audioStarted = false;
 let _lastSoundKey = null;
+let _isMuted = false;
 
 // p5.FFT — analyses bass energy of the master output each frame
 // Used by getBassPulse() which drawSpawnedFlowers() reads to pulse flower size
@@ -142,15 +143,15 @@ function updateSound() {
   if (key === 'night' && _sndNight && !_sndNight.isPlaying()) _sndNight.play();
   if (key === 'collapse' && _sndCollapse && !_sndCollapse.isPlaying()) _sndCollapse.play();
 
-  if (_sndDay) _sndDay.setVolume((key === 'day') ? VOL_DAY : 0, FADE_TIME);
-  if (_sndRain) _sndRain.setVolume((key === 'rain') ? VOL_RAIN : 0, FADE_TIME);
-  if (_sndNight) _sndNight.setVolume((key === 'night') ? VOL_NIGHT : 0, FADE_TIME);
-  if (_sndCollapse) _sndCollapse.setVolume((key === 'collapse') ? VOL_COLLAPSE : 0, FADE_TIME);
+  if (_sndDay)      _sndDay.setVolume((!_isMuted && key === 'day')      ? VOL_DAY      : 0, FADE_TIME);
+  if (_sndRain)     _sndRain.setVolume((!_isMuted && key === 'rain')     ? VOL_RAIN     : 0, FADE_TIME);
+  if (_sndNight)    _sndNight.setVolume((!_isMuted && key === 'night')    ? VOL_NIGHT    : 0, FADE_TIME);
+  if (_sndCollapse) _sndCollapse.setVolume((!_isMuted && key === 'collapse')? VOL_COLLAPSE : 0, FADE_TIME);
 }
 
 // flower pop sound 
 function playFlowerPop() {
-  if (_audioStarted && _sndPop) {
+  if (_audioStarted && !_isMuted && _sndPop) {
     _sndPop.setVolume(0.03);
     _sndPop.play();
   }
@@ -159,9 +160,33 @@ function playFlowerPop() {
 
 // fish jump sound
 function playFishSplash(fishX) {
-  if (!_audioStarted || !_sndFishSplash) return;
+  if (!_audioStarted || _isMuted || !_sndFishSplash) return;
   let panVal = constrain(map(fishX, 0, nativeW, -1, 1), -1, 1);
   _sndFishSplash.pan(panVal);
   _sndFishSplash.setVolume(0.35);
   _sndFishSplash.play();
+}
+
+function isMuted() {
+  return _isMuted;
+}
+
+function toggleMute() {
+  _isMuted = !_isMuted;
+
+  if (_isMuted) {
+    // Silence everything right away
+    if (_sndDay)      _sndDay.setVolume(0);
+    if (_sndRain)     _sndRain.setVolume(0);
+    if (_sndNight)    _sndNight.setVolume(0);
+    if (_sndCollapse) _sndCollapse.setVolume(0);
+  }
+
+  // Force updateSound() to re-apply the correct volume on its next run
+  _lastSoundKey = '__force__';
+
+  // Make sure audio is unlocked if this is the first interaction
+  if (typeof startAudio === 'function') startAudio();
+
+  return _isMuted;
 }

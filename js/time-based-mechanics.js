@@ -13,13 +13,7 @@
 //   - Day/night blend transition (smooth fade between day and night layers)
 //   - Sun rise animation (sun slides up into position on load)
 //
-// WHAT SKETCH.JS CALLS FROM HERE:
-//   updateClouds()    → called every frame in draw()
-//   updateDayNight()  → called every frame in draw()
-//
-// HOW CLOUD POSITIONS REACH SKETCH.JS:
-//   updateClouds() writes to STATE.cloudOffsets.
-//   drawLayer() in sketch.js reads STATE.cloudOffsets to offset each cloud's x.
+// This format was generated using Claude.ai
 //
 // =============================================================================
 
@@ -62,10 +56,8 @@ let _sunRiseComplete  = false;  // true once sun has fully risen — stops updat
 
 
 // =============================================================================
-// UPDATE CLOUDS
-// Called every frame from draw() in sketch.js.
-// Advances each cloud's x offset and wraps it back when it exits the scene.
-// Writes directly to STATE.cloudOffsets — sketch.js reads from there.
+// PART 1 - UPDATE CLOUDS
+// This code was generated using Claude.ai
 // =============================================================================
 function updateClouds() {
 
@@ -81,7 +73,10 @@ function updateClouds() {
     }
   }
 }
-
+// =============================================================================
+// PART 2 - SUN AND MOON ANIMATIONS
+// This code was generated using Claude.ai but edited by me
+// =============================================================================
 const SUN_LAYER_ID  = 'layer-sun';
 const MOON_LAYER_ID = 'layer-moon';
 
@@ -120,29 +115,18 @@ function updateDayNight() {
 }
 
 // =============================================================================
-// PART 4 — BIRD ANIMATION
+// PART 3 — BIRD ANIMATION
 // =============================================================================
-// Adapted from an original p5.js sketch by Patt Vira:
-// https://www.youtube.com/watch?v=ttz05d8DSOs
-// The original mechanic design is Patt Vira's.
-//
-// HOW IT WORKS:
-//   Each bird is an object with position, angle, velocity, and flap values.
-//   updateBirds() is called every frame from sketch.js draw().
-//   It moves each bird forward along its angle, increments its flap cycle,
-//   then draws it as a triangle (wings) + ellipse (body) on the p5 canvas.
-//   When a bird exits the right edge it resets to a new random position on
-//   the left so the flock never disappears.
-//
-//   The wing tip point (p2) oscillates using sin(flap) which creates the
-//   flapping motion without any complex physics.
-//
-//   Birds only draw during daytime (STATE.dayNight < 0.8) so they
-//   naturally disappear as the scene transitions to night.
+// Adapted from an original p5.js sketch by ziyushi330:
+// https://editor.p5js.org/ziyushi330/sketches/e9dob0hJ_
+// The original mechanic design is ziyushi330.
 //
 // p5.js functions used:
 //   createVector(), p5.Vector.fromAngle(), random(), sin(), map(),
 //   noStroke(), fill(), ellipse(), triangle(), PI, TWO_PI
+//
+// This code was generated using Claude.ai, but edited by me.
+//
 // =============================================================================
 
 const BIRDS_NUMBER = 6;
@@ -188,7 +172,7 @@ BirdC.prototype.update = function() {
   // Increment flap cycle 
   this.flap += this.vel * 0.05;
 
-  // Build three triangle points 
+  // Build three triangle points that make up the bird animation.
 
   var p0 = p5.Vector.fromAngle(this.angle);
   p0.normalize();
@@ -226,11 +210,10 @@ function updateBirds() {
 }
 
 // =============================================================================
-// OCEAN SWAY
-// Moves the ocean layer gently left and right after sketch.js has already
-// set its transform — called at the end of draw() via updateOceanSway().
-// sin() provides natural easing so the motion feels smooth, not mechanical.
-// p5.js functions used: sin(), frameCount
+//  PART 4 — OCEAN SWAY
+// =============================================================================
+// 
+// This code was generated using Claude.ai, but edited by me.
 // =============================================================================
 
 function updateOceanSway() {
@@ -240,6 +223,7 @@ function updateOceanSway() {
   // Extract current Y from existing transform so we don't lose it
   let yMatch = current.match(/translate\([^,]+,\s*([^)]+)\)/);
   let currentY = yMatch ? yMatch[1] : '-58px';
+  // This changes the length of how fiar the svg moves.
   let swayX = sin(frameCount * 0.02) * 8;
   ocean.style.transform = `translate(${swayX}px, ${currentY})`;
 }

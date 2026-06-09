@@ -34,6 +34,21 @@
       </div>
     </div>
 
+    <!-- Gallery label — sits beside the frame -->
+    <div id="artwork-label">
+      <div class="label-title">Karma</div>
+      <div class="label-sub">An Interactive Living Landscape · 2026</div>
+      <ul class="label-interactions">
+        <li><span>Click</span> Plant a flower on the grass</li>
+        <li><span>Click &amp; drag</span> Scatter a trail of wildflowers</li>
+        <li><span>Double-click a tree</span> Build a bird's nest</li>
+        <li><span>Press R</span> Rain falls — flowers and trees grow</li>
+        <li><span>Press X</span> Damage — trees fall, flowers wilt</li>
+        <li><span>Press X ×3</span> The ecosystem collapses</li>
+        <li><span>🔊</span> Toggle sound</li>
+      </ul>
+    </div>
+
     <script>
       // Build SVG scene into the DOM before sketch.js starts animating.
       // Sets window._sceneReady = true when all SVGs are loaded.
@@ -46,6 +61,54 @@
 
     <!-- sketch.js loaded last — uses everything above -->
     <script src="sketch.js"></script>
+
+    <!-- Responsive sizing — scales the whole artwork to fit the window.
+         Does NOT change layout or behaviour:
+           • Sets a single --scale CSS variable that style.css uses to size the
+             frame, scene and label proportionally.
+           • Sizes the p5 canvas's *display* size (CSS) only — its internal
+             resolution stays 1455x1087, so p5's mouseX/mouseY keep mapping to
+             native coordinates and all click/drag interactions are unaffected. -->
+    <script>
+      (function () {
+        // Native footprint of the whole piece (frame + gap + label):
+        //   frame  = 1455 + 2*20 padding = 1495
+        //   gap    = 60
+        //   label  = 320
+        const BASE_W = 1495 + 60 + 320;  // 1875
+        const BASE_H = 1087 + 2 * 20;    // 1127  (frame height = scene + padding)
+        const MARGIN = 0.96;             // small breathing room from window edges
+
+        function applyScale() {
+          // Fit to window, but never upscale past 1 (keeps the canvas crisp).
+          let s = Math.min(
+            window.innerWidth  / BASE_W,
+            window.innerHeight / BASE_H
+          ) * MARGIN;
+          s = Math.min(s, 1);
+
+          document.documentElement.style.setProperty('--scale', s);
+
+          // Scale the canvas display size; internal resolution is untouched.
+          const cnv = document.querySelector('#scene-container canvas');
+          if (cnv) {
+            cnv.style.width  = (1455 * s) + 'px';
+            cnv.style.height = (1087 * s) + 'px';
+          }
+        }
+
+        window.addEventListener('resize', applyScale);
+
+        // The p5 canvas is created asynchronously in setup(); keep applying each
+        // frame until it exists so its initial display size is correct too.
+        (function waitForCanvas() {
+          applyScale();
+          if (!document.querySelector('#scene-container canvas')) {
+            requestAnimationFrame(waitForCanvas);
+          }
+        })();
+      })();
+    </script>
 
   </body>
 </html>
