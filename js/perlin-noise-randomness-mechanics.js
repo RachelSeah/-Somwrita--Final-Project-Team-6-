@@ -499,75 +499,116 @@ function getRainOpacity() {
 // p5.js functions used: sin(), PI, cos(), random(), millis(), map(), HALF_PI
 // =============================================================================
 
-// Two open-water spawn zones — each carries its own surface y and clip bounds
+// Spawn zones — each carries its own surface y, clip bounds, group limit, and size scale.
+// sizeScale < 1 makes fish smaller to convey distance.
+// maxGroupSize caps how many fish can appear at once from that zone.
+// jumpHMin/Max controls the arc height for each zone.
 const FISH_ZONES = [
-  { xMin: 400, xMax: 700, surfaceY: 635, clipTop: 500, clipBot: 655 },
-  { xMin: 800, xMax: 950, surfaceY: 835, clipTop: 700, clipBot: 855 }
+  { xMin: 400, xMax: 700, surfaceY: 635, clipTop: 500, clipBot: 655, maxGroupSize: 3, sizeScale: 1.0,  jumpHMin: 60, jumpHMax: 125 },
+  { xMin: 800, xMax: 950, surfaceY: 835, clipTop: 700, clipBot: 855, maxGroupSize: 3, sizeScale: 1.0,  jumpHMin: 60, jumpHMax: 125 },
+  { xMin: 750, xMax: 850, surfaceY: 545, clipTop: 500, clipBot: 555, maxGroupSize: 2, sizeScale: 0.52, jumpHMin: 20, jumpHMax: 40  }  // far/distant zone — y=500–550
 ];
 
 let _fishArr        = [];
-let _fishBudget     = 0;      // fish still to spawn this rain event (2 or 3)
-let _nextFishTime   = 0;      // millis() timestamp for next spawn
-let _prevRainActive = false;  // tracks rain state each frame to detect R press transition
+let _spawnSchedule  = [];    // pre-calculated [{size, zoneIdx, time}, ...] for this rain event
+let _scheduleIdx    = 0;     // next group index in _spawnSchedule to spawn
+let _prevRainActive = false; // tracks rain state each frame to detect R press transition
+let _ambientFishTime = 0;    // next millis() at which to spawn ambient fish (no rain)
 
 // Called once from initNoise() — resets fish system on load
 function initFish() {
-  _fishArr        = [];
-  _fishBudget     = 0;
-  _nextFishTime   = 0;
-  _prevRainActive = false;
+  _fishArr         = [];
+  _spawnSchedule   = [];
+  _scheduleIdx     = 0;
+  _prevRainActive  = false;
+  _ambientFishTime = 0;
+}
+
+// Builds a spawn schedule: 6–10 fish total, in zone-aware groups spread across rain duration.
+// Each group is assigned a zone first so maxGroupSize per zone is respected.
+function _buildFishSchedule(now) {
+  let totalFish = floor(random(6, 11));  // 6–10 total fish this rain
+  let remaining = totalFish;
+  let groups    = [];
+  while (remaining > 0) {
+    let zoneIdx = floor(random(FISH_ZONES.length));
+    let maxG    = min(FISH_ZONES[zoneIdx].maxGroupSize, remaining);
+    let g       = floor(random(1, maxG + 1));  // 1 to maxGroupSize inclusive
+    groups.push({ size: g, zoneIdx });
+    remaining -= g;
+  }
+  // Spread groups evenly across 7 s of the 8 s rain (leave 1 s buffer at end)
+  let rainSpan = 7000;
+  _spawnSchedule = groups.map((grp, i) => {
+    let winStart = (i / groups.length) * rainSpan;
+    let winEnd   = ((i + 1) / groups.length) * rainSpan;
+    return { size: grp.size, zoneIdx: grp.zoneIdx,
+             time: now + winStart + random(0, winEnd - winStart) };
+  });
+  _scheduleIdx = 0;
+}
+
+// Spawns one fish with all properties. swimAngle drives diagonal jump direction.
+function _spawnOneFish(zone) {
+  let colStyle = floor(random(3));
+  let r, g2, b;
+  if      (colStyle === 0) { r = random(130,190); g2 = random(185,225); b = random(210,245); }
+  else if (colStyle === 1) { r = random(220,255); g2 = random(150,200); b = random(50, 100); }
+  else                     { r = random(220,255); g2 = random(100,150); b = random(100,150); }
+
+  _fishArr.push({
+    x:        random(zone.xMin, zone.xMax),
+    surfaceY: zone.surfaceY,
+    clipTop:  zone.clipTop,
+    clipBot:  zone.clipBot,
+    t:        0,
+    speed:    STATE.dayNight > 0.5
+               ? random(0.007, 0.018)   // night — fish move slower
+               : random(0.010, 0.030),  // day — normal speed
+    jumpH:    random(zone.jumpHMin, zone.jumpHMax),          // zone-specific arc height
+    tiltMult: random(0.25, 0.85),
+    facing:   random() < 0.5 ? 1 : -1,
+    fishType: floor(random(3)),
+    size:     random(18, 30) * zone.sizeScale,               // smaller for distant zone
+    r, g: g2, b,
+    phase:    'jumping',
+    splashT:  0,
+    drops:    []
+  });
 }
 
 // Called EVERY frame from updateNoise() — must run even when no rain/fish
-// so that _prevRainActive always reflects the last known STATE.rainActive.
+// so _prevRainActive always reflects the last known STATE.rainActive.
 function updateFish() {
   let now = millis();
 
-  // Detect fresh rain press (false → true transition) → set budget for this event
+  // Detect fresh rain press (false → true transition) → build this event's schedule
   if (STATE.rainActive && !_prevRainActive) {
-    _fishBudget   = floor(random(4, 8));    // 4 to 7 total fish per rain press
-    _nextFishTime = now + random(400, 900); // short delay before first fish
+    _buildFishSchedule(now);
   }
-  _prevRainActive = STATE.rainActive;  // always updated — this is the fix
+  _prevRainActive = STATE.rainActive;  // always updated — fixes stuck-state bug
 
-  // Spawn next group of fish — group size is 1, 2, or 3, capped by remaining budget
-  if (_fishBudget > 0 && now > _nextFishTime) {
-    let groupSize = min(floor(random(1, 4)), _fishBudget);  // 1–3, never exceed budget
-
-    for (let g = 0; g < groupSize; g++) {
-      let zone = FISH_ZONES[floor(random(FISH_ZONES.length))];
-
-      // Pick colour randomly: 0=blue, 1=orange-yellow, 2=light-red
-      let colStyle = floor(random(3));
-      let r, g2, b;
-      if (colStyle === 0) {
-        r = random(130, 190); g2 = random(185, 225); b = random(210, 245); // blue
-      } else if (colStyle === 1) {
-        r = random(220, 255); g2 = random(150, 200); b = random(50,  100); // orange-yellow
-      } else {
-        r = random(220, 255); g2 = random(100, 150); b = random(100, 150); // light red
-      }
-
-      _fishArr.push({
-        x:        random(zone.xMin, zone.xMax),
-        surfaceY: zone.surfaceY,
-        clipTop:  zone.clipTop,
-        clipBot:  zone.clipBot,
-        t:        0,
-        speed:    random(0.010, 0.040),  // wide range so grouped fish jump at clearly different paces
-        jumpH:    random(60, 125),
-        tiltMult: random(0.25, 0.85),
-        facing:   random() < 0.5 ? 1 : -1,
-        size:     random(18, 30),
-        r, g: g2, b,
-        phase:    'jumping',
-        splashT:  0,
-        drops:    []
-      });
+  // Fire any scheduled groups whose time has arrived (rain fish)
+  while (_scheduleIdx < _spawnSchedule.length &&
+         now >= _spawnSchedule[_scheduleIdx].time) {
+    let grp = _spawnSchedule[_scheduleIdx];
+    for (let g = 0; g < grp.size; g++) {
+      _spawnOneFish(FISH_ZONES[grp.zoneIdx]);  // use the pre-assigned zone
     }
+    _scheduleIdx++;
+  }
 
-    _fishBudget -= groupSize;
-    _nextFishTime = now + random(1200, 2800);  // delay before next group
+  // Ambient fish — appear when not raining and health is good (≥50).
+  // Day: 1 or 2 fish every 4–5 s. Night: same count but every 6–9 s (quieter).
+  if (!STATE.rainActive && STATE.health >= 50 && now >= _ambientFishTime) {
+    let count = floor(random(1, 3));  // 1 or 2
+    for (let i = 0; i < count; i++) {
+      _spawnOneFish(FISH_ZONES[floor(random(FISH_ZONES.length))]);
+    }
+    let interval = STATE.dayNight > 0.5
+      ? random(6000, 9000)   // night — fish appear less frequently
+      : random(4000, 5000);  // day — normal frequency
+    _ambientFishTime = now + interval;
   }
 
   // Advance each fish's animation
@@ -616,8 +657,9 @@ function drawFish() {
       let arcY = f.surfaceY - sin(PI * f.t) * f.jumpH;
       if (arcY >= f.surfaceY) continue;
 
-      // Tilt forward on ascent, backward on descent.
-      // Negated for left-facing fish: scale(-1,1) reverses rotation direction,
+      // Tilt: lean forward going up, backward coming down.
+      // tiltMult is unique per fish so each jump has a different lean angle.
+      // For left-facing fish, negate tilt — scale(-1,1) reverses rotation direction,
       // so without negation the nose dips down on ascent instead of pointing up.
       let tilt = map(f.t, 0, 1, -HALF_PI * f.tiltMult, HALF_PI * f.tiltMult);
       if (f.facing === -1) tilt = -tilt;
@@ -628,34 +670,80 @@ function drawFish() {
       pg.drawingContext.rect(0, f.clipTop, nativeW, f.clipBot - f.clipTop);
       pg.drawingContext.clip();
 
+      // Night tint — matches the same approach used for spawned flowers.
+      // STATE.dayNight: 0=full day, 1=full night.
+      // Red and green dim strongly; blue drops less (cool moonlit look);
+      // alpha reduces so fish are still faintly visible at night.
+      let dn  = STATE.dayNight;
+      let cr  = lerp(f.r, f.r * 0.35, dn);
+      let cg  = lerp(f.g, f.g * 0.35, dn);
+      let cb  = lerp(f.b, f.b * 0.55, dn);   // blue drops less
+      let ca  = lerp(225,  225 * 0.60, dn);   // body alpha
+      let ct  = lerp(210,  210 * 0.60, dn);   // tail alpha
+      let cf  = lerp(185,  185 * 0.55, dn);   // fin alpha
+
       pg.push();
       pg.translate(f.x, arcY);
       pg.rotate(tilt);
       pg.scale(f.facing, 1);  // mirrors horizontally for left-facing fish
       pg.noStroke();
 
-      // Body
-      pg.fill(f.r, f.g, f.b, 225);
-      pg.ellipse(0, 0, f.size, f.size * 0.45);
+      if (f.fishType === 0) {
+        // ── Type 0: Standard streamlined fish — forked V-tail + dorsal fin ──────
+        // Body
+        pg.fill(cr, cg, cb, ca);
+        pg.ellipse(0, 0, f.size, f.size * 0.42);
+        // Forked tail — two separate triangles forming a V
+        pg.fill(cr * 0.75, cg * 0.75, cb, ct);
+        pg.triangle(-f.size*0.44,  0,  -f.size*0.84, -f.size*0.36,  -f.size*0.60,  0);
+        pg.triangle(-f.size*0.44,  0,  -f.size*0.84,  f.size*0.36,  -f.size*0.60,  0);
+        // Dorsal fin
+        pg.fill(cr * 0.85, cg * 0.85, cb, cf);
+        pg.triangle(-f.size*0.05, -f.size*0.20,  -f.size*0.26, -f.size*0.44,  f.size*0.18, -f.size*0.20);
+        // Eye
+        pg.fill(15, 15, 35, 230);
+        pg.ellipse(f.size*0.26, -f.size*0.05, f.size*0.12, f.size*0.12);
 
-      // Tail
-      pg.fill(f.r * 0.8, f.g * 0.8, f.b, 210);
-      pg.triangle(
-        -f.size * 0.48,  0,
-        -f.size * 0.82, -f.size * 0.30,
-        -f.size * 0.82,  f.size * 0.30
-      );
+      } else if (f.fishType === 1) {
+        // ── Type 1: Chubby round fish — wide body, big fan tail, large eye ──────
+        // Body — rounder proportions
+        pg.fill(cr, cg, cb, ca);
+        pg.ellipse(0, 0, f.size * 0.88, f.size * 0.72);
+        // Big fan tail (single wide triangle)
+        pg.fill(cr * 0.75, cg * 0.75, cb, ct);
+        pg.triangle(-f.size*0.40, 0,  -f.size*0.84, -f.size*0.44,  -f.size*0.84, f.size*0.44);
+        // Top dorsal fin
+        pg.fill(cr * 0.85, cg * 0.85, cb, cf);
+        pg.triangle(-f.size*0.08, -f.size*0.35,  f.size*0.18, -f.size*0.56,  f.size*0.10, -f.size*0.35);
+        // Large eye with white highlight — gives it a cute character
+        pg.fill(15, 15, 35, 230);
+        pg.ellipse(f.size*0.20, -f.size*0.10, f.size*0.19, f.size*0.19);
+        pg.fill(lerp(255, 180, dn), lerp(255, 180, dn), lerp(255, 220, dn), lerp(200, 120, dn));
+        pg.ellipse(f.size*0.24, -f.size*0.15, f.size*0.07, f.size*0.07);
 
-      // Eye
-      pg.fill(15, 15, 35, 230);
-      pg.ellipse(f.size * 0.27, -f.size * 0.05, f.size * 0.11, f.size * 0.11);
+      } else {
+        // ── Type 2: Slim dart fish — long thin body, small tail, tiny eye ───────
+        // Long thin body
+        pg.fill(cr, cg, cb, ca);
+        pg.ellipse(0, 0, f.size * 1.28, f.size * 0.26);
+        // Small pointed tail
+        pg.fill(cr * 0.75, cg * 0.75, cb, ct);
+        pg.triangle(-f.size*0.58,  0,  -f.size*0.94, -f.size*0.20,  -f.size*0.94, f.size*0.20);
+        // Small dorsal fin
+        pg.fill(cr * 0.85, cg * 0.85, cb, cf);
+        pg.triangle(f.size*0.05, -f.size*0.12,  -f.size*0.12, -f.size*0.28,  f.size*0.22, -f.size*0.12);
+        // Tiny eye
+        pg.fill(15, 15, 35, 230);
+        pg.ellipse(f.size*0.40, -f.size*0.03, f.size*0.09, f.size*0.09);
+      }
 
       pg.pop();
       pg.drawingContext.restore();
     }
 
-    // Splash drops — clipped to same zone as the fish
+    // Splash drops — tinted to match night (cooler, dimmer at night)
     if (f.drops.length > 0) {
+      let dn2 = STATE.dayNight;
       pg.drawingContext.save();
       pg.drawingContext.beginPath();
       pg.drawingContext.rect(0, f.clipTop, nativeW, f.clipBot - f.clipTop);
@@ -663,7 +751,11 @@ function drawFish() {
       pg.noStroke();
       for (let d of f.drops) {
         if (d.life <= 0) continue;
-        pg.fill(190, 220, 255, d.life * 185);
+        // Splash stays blue-white in day, dims to a faint moonlit blue at night
+        let dr = lerp(190, 120, dn2);
+        let dg = lerp(220, 150, dn2);
+        let db = lerp(255, 210, dn2);
+        pg.fill(dr, dg, db, d.life * lerp(185, 100, dn2));
         pg.ellipse(d.x, d.y, 3.5, 3.5);
       }
       pg.drawingContext.restore();
