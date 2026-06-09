@@ -185,7 +185,7 @@ function updateLayerTransforms() {
     if (layer.id === 'ocean') dx += sin(frameCount * 0.01) * 25;
     // Background layers (low i) move less, foreground (high i) move more
     let depth = i / (LAYERS.length - 1);
-    dx += _parallaxX * map(depth, 0, 1, 2, 12);
+    dx += _parallaxX * map(depth, 0, 1, 2, 10);
     dy += _parallaxY * map(depth, 0, 1, 1, 15);
     el.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
   }
