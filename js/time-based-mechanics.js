@@ -47,7 +47,7 @@ const CLOUD_RESET_X = -500;
 // How fast STATE.dayNight changes per frame.
 // 0.002 per frame at 60fps = ~500 frames = ~8 seconds for a full transition.
 // Increase this value for a faster transition, decrease for slower.
-const DAY_NIGHT_SPEED = 0.002;
+const DAY_NIGHT_SPEED = 0.003;
 
 
 // ── SUN RISE CONFIG ───────────────────────────────────────────────────────────

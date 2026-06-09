@@ -525,44 +525,49 @@ function updateFish() {
 
   // Detect fresh rain press (false → true transition) → set budget for this event
   if (STATE.rainActive && !_prevRainActive) {
-    _fishBudget   = floor(random(2, 4));    // 2 or 3 fish per rain press
+    _fishBudget   = floor(random(4, 8));    // 4 to 7 total fish per rain press
     _nextFishTime = now + random(400, 900); // short delay before first fish
   }
   _prevRainActive = STATE.rainActive;  // always updated — this is the fix
 
-  // Spawn next queued fish with staggered delays
+  // Spawn next group of fish — group size is 1, 2, or 3, capped by remaining budget
   if (_fishBudget > 0 && now > _nextFishTime) {
-    let zone = FISH_ZONES[floor(random(FISH_ZONES.length))];
+    let groupSize = min(floor(random(1, 4)), _fishBudget);  // 1–3, never exceed budget
 
-    // Pick colour randomly: 0=blue, 1=orange-yellow, 2=light-red
-    let colStyle = floor(random(3));
-    let r, g, b;
-    if (colStyle === 0) {
-      r = random(130, 190); g = random(185, 225); b = random(210, 245); // blue
-    } else if (colStyle === 1) {
-      r = random(220, 255); g = random(150, 200); b = random(50,  100); // orange-yellow
-    } else {
-      r = random(220, 255); g = random(100, 150); b = random(100, 150); // light red
+    for (let g = 0; g < groupSize; g++) {
+      let zone = FISH_ZONES[floor(random(FISH_ZONES.length))];
+
+      // Pick colour randomly: 0=blue, 1=orange-yellow, 2=light-red
+      let colStyle = floor(random(3));
+      let r, g2, b;
+      if (colStyle === 0) {
+        r = random(130, 190); g2 = random(185, 225); b = random(210, 245); // blue
+      } else if (colStyle === 1) {
+        r = random(220, 255); g2 = random(150, 200); b = random(50,  100); // orange-yellow
+      } else {
+        r = random(220, 255); g2 = random(100, 150); b = random(100, 150); // light red
+      }
+
+      _fishArr.push({
+        x:        random(zone.xMin, zone.xMax),
+        surfaceY: zone.surfaceY,
+        clipTop:  zone.clipTop,
+        clipBot:  zone.clipBot,
+        t:        0,
+        speed:    random(0.010, 0.040),  // wide range so grouped fish jump at clearly different paces
+        jumpH:    random(60, 125),
+        tiltMult: random(0.25, 0.85),
+        facing:   random() < 0.5 ? 1 : -1,
+        size:     random(18, 30),
+        r, g: g2, b,
+        phase:    'jumping',
+        splashT:  0,
+        drops:    []
+      });
     }
 
-    _fishArr.push({
-      x:        random(zone.xMin, zone.xMax),
-      surfaceY: zone.surfaceY,   // each fish knows its own water surface
-      clipTop:  zone.clipTop,    // and its own canvas clip bounds
-      clipBot:  zone.clipBot,
-      t:        0,               // arc progress: 0=surface, 0.5=peak, 1=back
-      speed:    random(0.016, 0.026),
-      jumpH:    random(60, 125), // peak height above surface in px
-      tiltMult: random(0.25, 0.85),
-      facing:   random() < 0.5 ? 1 : -1,  // 1=right, -1=left
-      size:     random(18, 30),
-      r, g, b,
-      phase:    'jumping',
-      splashT:  0,
-      drops:    []
-    });
-    _fishBudget--;
-    _nextFishTime = now + random(1200, 2800);
+    _fishBudget -= groupSize;
+    _nextFishTime = now + random(1200, 2800);  // delay before next group
   }
 
   // Advance each fish's animation

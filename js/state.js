@@ -176,10 +176,10 @@ function triggerFireflies() {
   STATE.firefliesActive = true;
   // dayNight transitions to 1.0 gradually — time.js handles that animation
 
-  // After 15 seconds, return to passive day state
+  // After 20 seconds, return to passive day state
   setTimeout(() => {
     returnToPassive();
-  }, 15000);
+  }, 20000);
 }
 
 // Resets the scene back to the starting passive state.
