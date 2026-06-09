@@ -1,6 +1,25 @@
 // js/audio-mechanics.js — Nishant Reddy (Audio Mechanic)
 // Claude was used to help structure the crossfade logic, FFT bass pulse, and pan mechanic.
 
+//AUDIO CREDITS 
+// All sounds sourced from Pixabay (free for use, no attribution required).
+//
+// ambient.mp3        — Morning/day forest ambience
+//                      https://pixabay.com/sound-effects/nature-forest-ambience-morningspring-localization-poland-4-296923/
+//
+// night.mp3          — Night ambience with cricket sounds
+//                      https://pixabay.com/sound-effects/nature-night-ambience-with-cricket-sound-271304/
+//
+// ambient_rain.mp3   — Rain sounds
+//                      https://pixabay.com/sound-effects/nature-copyright-free-rain-sounds-331497/
+//
+// fish_splash.mp3    — Fish jumping splash
+//                      https://pixabay.com/sound-effects/nature-fish-jumping-splash-2-96871/
+//
+// flower_pop.mp3     — Custom trimmed sound for flower spawn
+
+
+
 let _sndDay = null;
 let _sndRain = null;
 let _sndNight = null;
