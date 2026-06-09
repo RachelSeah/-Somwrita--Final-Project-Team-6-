@@ -144,44 +144,16 @@ function isOnGrass(sceneX, sceneY) {
   return getFlowerZone(sceneX, sceneY) !== null;
 }
 
-// ── TREE HIT ZONES ────────────────────────────────────────────────────────────
-// Approximate bounding boxes for each tree's visible canopy area.
-// Derived from layer x/y offsets in layers.js and the scene layout:
-//   - Sky occupies y ≈ 0–350
-//   - Ocean strip:  y ≈ 360–440 (no trees here)
-//   - Tree canopies: y ≈ 280–820
-//   - Foreground ground starts at y ≈ 860
-//
-// These don't need to be pixel-perfect — they just prevent clicks on sky,
-// ocean, or pure ground from triggering a bird nest.
-const TREE_ZONES = [
-  // tree-1  — large foreground tree, left side   (layer x=-30,  y=-120)
-  { id: 'tree-1', xMin: 0, xMax: 500, yMin: 280, yMax: 820 },
-  // tree-2  — mid-ground, left-centre             (layer x=100,  y=20)
-  { id: 'tree-2', xMin: 50, xMax: 600, yMin: 300, yMax: 760 },
-  // tree-3  — foreground, far left                (layer x=-150, y=100)
-  { id: 'tree-3', xMin: 0, xMax: 400, yMin: 300, yMax: 820 },
-  // tree-4  — mid-ground, centre                  (layer x=0,    y=25)
-  { id: 'tree-4', xMin: 200, xMax: 900, yMin: 300, yMax: 760 },
-  // tree-5  — mid-ground, far right               (layer x=1250, y=-60)
-  { id: 'tree-5', xMin: 1050, xMax: 1455, yMin: 280, yMax: 720 },
-  // tree-6  — mid-ground, left                    (layer x=-100, y=65)
-  { id: 'tree-6', xMin: 0, xMax: 600, yMin: 320, yMax: 780 },
-  // tree-7  — mid-ground, centre-right            (layer x=0,    y=0)
-  { id: 'tree-7', xMin: 300, xMax: 1200, yMin: 300, yMax: 760 },
-  // tree-8  — background, spread across scene     (layer x=0,    y=-64)
-  { id: 'tree-8', xMin: 100, xMax: 1350, yMin: 280, yMax: 680 },
-  // tree-bush — mid-ground shrub/tree cluster     (layer x=0,    y=0)
-  { id: 'tree-bush', xMin: 100, xMax: 900, yMin: 320, yMax: 760 },
+// ── NEST ZONES ────────────────────────────────────────────────────────────────
+// Two specific areas where a double-click forms a nest.
+const NEST_ZONES = [
+  { xMin: 80,   xMax: 180,  yMin: 680, yMax: 780 },
+  { xMin: 1191, xMax: 1300, yMin: 615, yMax: 715 }
 ];
 
-// Returns true if the click lands inside any tree's bounding zone.
-// Also rejects clicks in the ocean strip (y ≈ 360–440) where no trees grow.
+// Returns true if the click lands inside a nest zone.
 function isOnTree(sceneX, sceneY) {
-  // Hard-reject the ocean strip — no trees visible there
-  if (sceneY >= 360 && sceneY <= 440) return false;
-
-  return TREE_ZONES.some(zone =>
+  return NEST_ZONES.some(zone =>
     sceneX >= zone.xMin && sceneX <= zone.xMax &&
     sceneY >= zone.yMin && sceneY <= zone.yMax
   );
@@ -368,6 +340,7 @@ function spawnFlower(x, y, sizeMult = 1.0) {
 
   _spawnedFlowers.push({
     x, y,
+    spawnTime: millis(),   // used for z-order sorting with nests
     size: 2 * sizeMult,
     targetSize: random(18, 30) * sizeMult,
     growSpeed: random(0.5, 1.0),
@@ -500,44 +473,31 @@ function restoreAllTrees() {
 
 
 // =============================================================================
-// SPAWN BIRD NEST
-// Creates a bird nest object at the given position with 1-2 birds that
-// fly in and settle near the nest.
+// SPAWN NEST
+// Creates a nest at the given position. Nest grows from 0 to targetSize,
+// stays visible for ~20 seconds, then fades out.
 // =============================================================================
 function spawnBirdNest(x, y) {
-  let birdCount = floor(random(1, 3)); // 1 or 2 birds
-  let birds = [];
-
-  for (let i = 0; i < birdCount; i++) {
-    birds.push({
-      // Birds start off-screen to the left and fly toward the nest
-      x: -50,
-      y: random(150, 400),
-      targetX: x + random(-40, 40),
-      targetY: y - random(20, 60),
-      speed: random(2, 4),
-      arrived: false,
-      flapT: random(1000)    // offset so birds don't flap in sync
-    });
-  }
-
   _birdNests.push({
-    x: x,
-    y: y,
-    size: 0,             // nest grows from 0
-    targetSize: 30,
-    birds: birds,
-    age: 0              // incremented each frame, used for lifetime
+    x,
+    y,
+    spawnTime:  millis(),      // used for z-order sorting with flowers
+    size:       0,
+    targetSize: 18,
+    opacity:    255,
+    age:        0,
+    noiseSeed:  random(10000),
+    numEggs:    floor(random(1, 3))  // 1 or 2 eggs, fixed at spawn
   });
 }
 
 
 // =============================================================================
-// DRAW SPAWNED FLOWERS
-// Called every frame from draw() in sketch.js.
-// Grows each flower toward its target size, fades dead ones, removes gone ones.
+// UPDATE SPAWNED FLOWERS
+// Handles rain timer, tree fading, and flower lifecycle (grow/fade/remove).
+// Drawing is handled separately by drawOneFlower() so z-order can be respected.
 // =============================================================================
-function drawSpawnedFlowers() {
+function drawSpawnedFlowers() {   // kept as original name so sketch.js call still works
 
   // Check rain timer — stop rain after RAIN_DURATION
   if (STATE.rainActive && _rainStartTime !== null) {
@@ -552,43 +512,46 @@ function drawSpawnedFlowers() {
     let ft = _fadingTrees[i];
 
     if (ft.recovering) {
-      // R key triggered recovery — fade back in
-      ft.opacity += 0.005;  // same speed as fade-out
+      ft.opacity += 0.005;
       if (ft.opacity >= 1.0) {
         ft.opacity = 1.0;
-        // Reset DOM element opacity and remove from tracking array
         let el = document.getElementById('layer-' + ft.layerId);
         if (el) el.style.opacity = '';
         _fadingTrees.splice(i, 1);
       }
     } else {
-      // X key damage — continue fading out
       ft.opacity -= 0.005;
       ft.opacity = max(ft.opacity, 0);
     }
   }
 
-  pg.noStroke();
-
-  // Draw and update each spawned flower
+  // Flower lifecycle — grow, fade, remove (no drawing here)
   for (let i = _spawnedFlowers.length - 1; i >= 0; i--) {
     let f = _spawnedFlowers[i];
+    if (f.alive && f.size < f.targetSize) f.size += f.growSpeed;
+    if (!f.alive) f.opacity -= 4;
+    if (f.opacity <= 0) { _spawnedFlowers.splice(i, 1); }
+  }
 
-    // Grow toward target size
-    if (f.alive && f.size < f.targetSize) {
-      f.size += f.growSpeed;
-    }
+  // Nest lifecycle — grow, fade, remove (no drawing here)
+  for (let i = _birdNests.length - 1; i >= 0; i--) {
+    let nest = _birdNests[i];
+    nest.age++;
+    if (nest.size < nest.targetSize) nest.size += 0.4;
+    const LIFE = 900, FADE = 120;   // 15 seconds at 60fps
+    if (nest.age > LIFE - FADE) nest.opacity = map(nest.age, LIFE - FADE, LIFE, 255, 0);
+    if (nest.age > LIFE) { _birdNests.splice(i, 1); }
+  }
+}
 
-    // Fade out dead flowers
-    if (!f.alive) {
-      f.opacity -= 4;
-    }
 
-    // Remove fully faded flowers
-    if (f.opacity <= 0) {
-      _spawnedFlowers.splice(i, 1);
-      continue;
-    }
+// =============================================================================
+// DRAW ONE FLOWER  (extracted from the old draw loop)
+// =============================================================================
+function _drawOneFlower(f) {
+  if (f.opacity <= 0) return;
+
+  pg.noStroke();
 
     // ── State-driven colour tinting ───────────────────────────────────────────
     // Both STATE.collapseTint and STATE.dayNight are smooth lerped values
@@ -742,79 +705,144 @@ function drawSpawnedFlowers() {
       pg.fill(centreR, centreG, centreB, colA * 0.85);
       pg.ellipse(cx, cy, f.size * 0.14, f.size * 0.14);
     }
+}   // end _drawOneFlower
+
+
+// =============================================================================
+// DRAW ONE NEST + COMBINED Z-SORTED DRAW
+// =============================================================================
+
+// Draws a single nest. Called from drawAllSpawnablesSorted().
+function _drawOneNest(nest) {
+  let s  = nest.size;
+  let op = nest.opacity;
+  if (op <= 0) return;
+
+  let dn = STATE.dayNight;
+  let ns = nest.noiseSeed;
+  let nt = STATE.noiseT;
+
+  let owR = lerp(98,  60, dn), owG = lerp(60, 38, dn), owB = lerp(22, 14, dn);
+  let ihR = lerp(52,  32, dn), ihG = lerp(30, 19, dn), ihB = lerp(10,  6, dn);
+  let tgR = lerp(62,  38, dn), tgG = lerp(36, 22, dn), tgB = lerp(12,  7, dn);
+  let rmR = lerp(120, 75, dn), rmG = lerp(78, 50, dn), rmB = lerp(28, 18, dn);
+  let egR = lerp(238, 170, dn), egG = lerp(228, 162, dn), egB = lerp(210, 148, dn);
+
+  const RX = s * 0.75, RY = s * 0.54;
+  const IX = s * 0.44, IY = s * 0.32;
+
+  pg.push();
+  pg.translate(nest.x, nest.y);
+
+  // Drop shadow
+  pg.noStroke();
+  pg.fill(20, 10, 3, op * 0.25);
+  pg.ellipse(1.5, 3.5, RX * 2.1, RY * 0.6);
+
+  // Outer ring — noisy filled oval
+  pg.fill(owR, owG, owB, op * 0.97);
+  pg.noStroke();
+  pg.beginShape();
+  for (let j = 0; j <= 28; j++) {
+    let a  = (j / 28) * TWO_PI;
+    let nr = map(noise(ns + j * 0.38, nt * 0.14), 0, 1, -s * 0.07, s * 0.07);
+    pg.vertex(cos(a) * (RX + nr), sin(a) * (RY + nr * 0.72));
   }
-}
+  pg.endShape(CLOSE);
 
+  // Inner hollow — noisy darker oval
+  pg.fill(ihR, ihG, ihB, op * 0.92);
+  pg.beginShape();
+  for (let j = 0; j <= 22; j++) {
+    let a  = (j / 22) * TWO_PI;
+    let nr = map(noise(ns + 10 + j * 0.42, nt * 0.16), 0, 1, -s * 0.05, s * 0.05);
+    pg.vertex(cos(a) * (IX + nr), sin(a) * (IY + nr * 0.72));
+  }
+  pg.endShape(CLOSE);
 
-// =============================================================================
-// DRAW SPAWNED BIRDS
-// Called every frame from draw() in sketch.js.
-// Moves birds toward their target (nest), draws them as simple wing shapes.
-// =============================================================================
-function drawSpawnedBirds() {
-
+  // Radial twig strokes — 12 paths from hollow edge to outer rim
   pg.noFill();
-  pg.strokeWeight(1.2);
-
-  for (let i = _birdNests.length - 1; i >= 0; i--) {
-    let nest = _birdNests[i];
-    nest.age++;
-
-    // Grow nest
-    if (nest.size < nest.targetSize) nest.size += 0.5;
-
-    // Draw nest — simple arc shape
-    pg.stroke(100, 70, 40, 200);
-    pg.strokeWeight(2);
-    pg.noFill();
-    pg.arc(nest.x, nest.y, nest.size * 2, nest.size, 0, PI);
-
-    // Draw and move each bird
-    for (let bird of nest.birds) {
-
-      if (!bird.arrived) {
-        // Move bird toward its target position
-        bird.x += (bird.targetX - bird.x) * bird.speed * 0.02;
-        bird.y += (bird.targetY - bird.y) * bird.speed * 0.02;
-
-        // Check if close enough to nest
-        if (dist(bird.x, bird.y, bird.targetX, bird.targetY) < 5) {
-          bird.arrived = true;
-        }
-      }
-
-      // Draw bird as two curved wing strokes (same approach as project_v4)
-      let flapAngle = sin(frameCount * 0.1 + bird.flapT) * 0.4;
-      let wl = 12;  // wing length
-
-      pg.stroke(40, 30, 20, 220);
-      pg.strokeWeight(1);
-
-      // Left wing
-      pg.beginShape();
-      pg.vertex(bird.x, bird.y);
-      pg.quadraticVertex(
-        bird.x - wl * 0.5, bird.y - sin(flapAngle) * wl * 0.3,
-        bird.x - wl, bird.y - sin(flapAngle) * wl * 0.6
-      );
-      pg.endShape();
-
-      // Right wing
-      pg.beginShape();
-      pg.vertex(bird.x, bird.y);
-      pg.quadraticVertex(
-        bird.x + wl * 0.5, bird.y - sin(flapAngle) * wl * 0.3,
-        bird.x + wl, bird.y - sin(flapAngle) * wl * 0.6
-      );
-      pg.endShape();
+  pg.strokeWeight(0.8);
+  for (let k = 0; k < 12; k++) {
+    let a  = (k / 12) * TWO_PI + map(noise(ns + k * 1.3), 0, 1, -0.22, 0.22);
+    pg.stroke(tgR, tgG, tgB, op * 0.48);
+    pg.beginShape();
+    for (let j = 0; j <= 7; j++) {
+      let t  = j / 7;
+      let px = cos(a) * lerp(IX * 0.88, RX * 0.95, t);
+      let py = sin(a) * lerp(IY * 0.88, RY * 0.95, t);
+      let perp = map(noise(ns + k * 20 + j * 0.6, nt * 0.22), 0, 1, -s * 0.055, s * 0.055);
+      pg.vertex(px + (-sin(a) * perp), py + (cos(a) * perp * 0.72));
     }
+    pg.endShape();
+  }
 
-    // Remove nest after 30 seconds (birds eventually fly away)
-    if (nest.age > 1800) {
-      _birdNests.splice(i, 1);
+  // Outer rim stroke
+  pg.stroke(rmR, rmG, rmB, op * 0.85);
+  pg.strokeWeight(1.6);
+  pg.noFill();
+  pg.beginShape();
+  for (let j = 0; j <= 28; j++) {
+    let a  = (j / 28) * TWO_PI;
+    let nr = map(noise(ns + 50 + j * 0.38, nt * 0.14), 0, 1, -s * 0.055, s * 0.055);
+    pg.vertex(cos(a) * (RX + nr), sin(a) * (RY + nr * 0.72));
+  }
+  pg.endShape(CLOSE);
+
+  // Eggs — 1 or 2 cream ellipses settled in the hollow.
+  // Single egg: centred, slightly larger.
+  // Two eggs: smaller and placed left/right so they don't overlap.
+  pg.noStroke();
+  let numEggs = nest.numEggs || 1;
+  // Small noise jitter on y so eggs sit naturally in the cup
+  let eJY = map(noise(ns + 300), 0, 1, IY * 0.10, IY * 0.45);
+
+  if (numEggs === 1) {
+    let ex = map(noise(ns + 200), 0, 1, -IX * 0.18, IX * 0.18);  // near centre
+    pg.fill(egR, egG, egB, op * 0.93);
+    pg.ellipse(ex, eJY, s * 0.24, s * 0.17);
+    pg.fill(ihR * 0.55, ihG * 0.55, ihB * 0.55, op * 0.28);
+    pg.ellipse(ex + 0.5, eJY + s * 0.045, s * 0.20, s * 0.065);
+  } else {
+    // Two smaller eggs side by side
+    let spread = IX * 0.38;
+    let offsets = [-spread, spread];
+    for (let e = 0; e < 2; e++) {
+      let ex = offsets[e] + map(noise(ns + 210 + e * 83), 0, 1, -IX * 0.10, IX * 0.10);
+      let ey = eJY   + map(noise(ns + 310 + e * 83), 0, 1, -IY * 0.10, IY * 0.10);
+      pg.fill(egR, egG, egB, op * 0.93);
+      pg.ellipse(ex, ey, s * 0.18, s * 0.13);
+      pg.fill(ihR * 0.55, ihG * 0.55, ihB * 0.55, op * 0.25);
+      pg.ellipse(ex + 0.5, ey + s * 0.04, s * 0.15, s * 0.05);
     }
   }
+
+  pg.pop();
 }
+
+// Merges flowers and nests sorted by spawnTime so the newest always draws on top.
+// Called from sketch.js instead of the old separate draw calls.
+function drawAllSpawnablesSorted() {
+  // Build combined list (skip fully faded items)
+  let list = [];
+  for (let f of _spawnedFlowers) {
+    if (f.opacity > 0) list.push({ type: 'flower', item: f, t: f.spawnTime || 0 });
+  }
+  for (let n of _birdNests) {
+    if (n.opacity > 0) list.push({ type: 'nest', item: n, t: n.spawnTime || 0 });
+  }
+  // Oldest first → drawn first → lowest z. Newest last → drawn last → on top.
+  list.sort((a, b) => a.t - b.t);
+  for (let entry of list) {
+    if (entry.type === 'flower') _drawOneFlower(entry.item);
+    else                         _drawOneNest(entry.item);
+  }
+}
+
+
+// drawSpawnedBirds kept as a no-op stub so sketch.js call doesn't error.
+// All drawing is now handled by drawAllSpawnablesSorted() via sketch.js.
+function drawSpawnedBirds() {}
 
 
 
