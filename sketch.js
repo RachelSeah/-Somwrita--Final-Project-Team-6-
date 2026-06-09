@@ -127,8 +127,10 @@ function draw() {
   let fOpacity = (typeof getFireflyOpacity === 'function') ? getFireflyOpacity() : 0;
   if (fOpacity > 0) drawFireflies(fOpacity);
 
+  // Lifecycle updates (grow, fade, remove) for both flowers and nests
   if (typeof drawSpawnedFlowers === 'function') drawSpawnedFlowers();
-  if (typeof drawSpawnedBirds === 'function') drawSpawnedBirds();
+  // Draw both sorted by spawnTime — newest always on top, regardless of type
+  if (typeof drawAllSpawnablesSorted === 'function') drawAllSpawnablesSorted();
 
   // ── 5. RENDER pg ONTO TRANSPARENT MAIN CANVAS ───────────────────────────────
   // clear() makes the main canvas fully transparent so the DOM scene shows through
