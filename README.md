@@ -88,9 +88,6 @@ The audio mechanic is the ecosystem's emotional voice, reflecting its living sta
 
 **p5.js functions:** `loadSound()`, `p5.FFT()`, `fft.analyze()`, `fft.getEnergy()`, `p5.Amplitude()`, `amp.getLevel()`, `map()`, `song.play()`, `song.pause()`
 
-
-
-
 (Nishant Reddy)
 
 ---
@@ -102,7 +99,7 @@ All four mechanics share a single canvas, unified by one concept- ecosystem heal
 ---
 
 ## Interaction Reference
-| Interaction |  What Happens |
+| Interaction | What Happens |
 |---|---|
 | Left click on ground | Flower grows with unique random petals |
 | Click & drag on ground |  Seed trail --> wildflower path blooms after delay |
@@ -113,7 +110,6 @@ All four mechanics share a single canvas, unified by one concept- ecosystem heal
 | Health threshold reached |  Dusk transition --> fireflies appear (earned, not triggered) |
 | Passive / no interaction |  Grass sways, water ripples, clouds drift |
 
----
 ---
 
 # Karma 
@@ -170,11 +166,10 @@ We used **Claude (Anthropic)** during development as a coding assistant — to h
 
 # Individual Contributions
 
+---
 ## Shweta Kamble (skam0940) - 
 Mechanics - Perlin Noise & Randomness, Shared State Architecture
-
 ---
-
 
 ### Perlin Noise & Randomness Mechanics (`perlin-noise-randomness-mechanics.js`)
 
@@ -186,7 +181,6 @@ Mechanics - Perlin Noise & Randomness, Shared State Architecture
 - **Spawned flower sway**: each flower carries a unique `swayT` noise seed; stem bezier and petal head drift together via `STATE.noiseT` so planted flowers immediately join the scene's wind.
 
 ---
-
 
 ### state.js — Artwork Transitions Logic
 
@@ -217,7 +211,6 @@ Time based mechanics, and creation of artwork
 - The flapping motion comes from passing the flap value through `sin()` which moves up and down the wing tip point up and down naturally without any complex physics.
 - **Reference:** Adapted from ziyushi330 —  https://editor.p5js.org/ziyushi330/sketches/e9dob0hJ_
 
-
 ### Ocean Sway
 - `sin(frameCount * 0.02)`produces a value that smoothly swings between -1 and 1 over time it is multiplied by 8 to set the pixel distance of how it sways, and applied to the ocean layer's X position each frame so it drifts left and right like a real lake surface breathing.
 
@@ -226,23 +219,16 @@ Time based mechanics, and creation of artwork
 - `min()`, `max()`, `map()`, `constrain()`, `pow()`, `sin()`, `frameCount`, `createVector()`, `p5.Vector.fromAngle()`, `random()`, `triangle()`, `ellipse()`, `noStroke()`, `fill()`
 
 ---
+
 ## Artwork Process
 - Designed and painted the original full landscape illustration in **Procreate**, building the scene in layers to plan the depth and separation of each element
 - Manually recreated each of the **35 individual layers** as a clean vector in **Adobe Illustrator**, exporting each one as its own SVG file for both the day and night versions
 - Set up the base project file structure in code where I used ai to help organising the folder system. I manually set the layers and x and y of the layers, to ensure that the image matches the final drawing. So the rest of the team could plug their mechanics straight in without conflicting with each other.
 
-
-
 ---
-
-
-
 ## Nishant Reddy (nish0595) - 
 Mechanics - Audio
-
-
 ---
-
 
 ### Audio Mechanics (js/audio-mechanics.js)
 
@@ -253,9 +239,7 @@ Mechanics - Audio
 - **Fish splash sound**: playFishSplash(fishX) plays when a fish hits the water surface, panned to match the fish's x position on screen so the splash feels spatially grounded.
 - **Browser autoplay handling**: audio is unlocked on the first mousedown, keydown, or touchstart gesture via AudioContext.resume() — ensuring sounds start correctly across all browsers without errors.
 
-
 ---
-
 
 ### Parallax Effect and Contributions (sketch.js)
 
@@ -263,8 +247,40 @@ Mechanics - Audio
 - **Audio initialisation hooks**: added preloadSounds() call in preload() and setupSounds() call in setup() so the audio system initialises correctly in the p5.js lifecycle
 - **Sound update loop**: added updateSound() call inside draw() so crossfading, pan, and FFT bass pulse all update every frame in sync with the rest of the scene
 
-
 ---
 
-
 **p5.js functions used:** `loadSound()`, `setLoop()`, `setVolume()`, `pan()`, `play()`, `isPlaying()`, `p5.FFT()`, `getEnergy()`, `getAudioContext()`, `createButton()`, `map()`, `constrain()`, `lerp()`, `analyze()`, `min()`, `max()`,
+
+---
+## Angel Huang (ahua0401) - 
+User-Input Mechanics
+---
+
+### Planting Flowers (Click)
+- Clicking on the grass plants a flower. `mousePressed()` detects the click and checks whether or not it is a valid grass zone for planting. `findFreePlantSpot()` and `isTooCloseToFlower()` also ensure that flowers are not overlapping one another. `SpawnFlower()` creates the flower with a randomized style and petal count so each flower is unique.
+
+### Scattering a Wildflower Trail (click & drag)
+- Dragging across te grass scatters a trail of wildflowers. `mouseDragged()` records points along the drag path as the mouse moves. When released, `mouseReleased()` calls `bloomTrailFlowers()`, which spaces flowers evenly along the path and blooms them one after another with a short delay.
+
+### Building a Bird's Nest (double-click)
+- Double-clicking a tree builds a bird's nest. `doubleClicked()` checks that the click is on a nest zone, using `isOnTree()`. Then, `spawnBirdNest()` creates a nest that grows in, holds one or two eggs, and later fades away. `_drawOneNest()` draws is using Perlin noise for a more natural look.
+
+### Rain & Recovery (R key)
+- Pressing R triggers a rain shower that heals the ecosystem. `keyPressed()` starts the rain and restore any faded trees using `restoreAllTrees()`. It spawns new flowers after a short delay, raising the overall health.
+
+### Damage & Collapse (X key)
+- Pressing X damages the ecosystem., using `keyPressed()`. `fadeRandomTrees()` fades random trees and wilts a portion of the flowers using `fadeSomeFlowers()`. Pressing X three times will send the whole ecosystem into full collapse.
+
+---
+## Additional Features
+
+### Gallery Label
+- A museum-style sign placed besides the artwork showing the title, description, and a list of every interaction. It is built as an HTML element styled with CSS.
+
+### Mute Button
+- A speaker-emoji button in the corner that toggles all sound on and off, calling `toggleMute()`. It gives users the freedom to silence the tracks instantly and keep them muted through state changes.
+
+---
+### p5.js Functions Used
+- `mousePressed()`, `mouseDragged()`, `mouseReleased()`, `doubleClicked()`, `keyPressed()`, `mouseX`, `mouseY`, `key`, `dist()`, `random()`, `map()`, `floor()`, `max()`, `lerp()`, `cos()`, `sin()`, `noise()`, `millis()`, `TWO_PI`, `HALF_PI`, `push()`, `pop()`, `translate()`, `beginShape()`, `vertex()`, `quadraticVertex()`, `endShape()`, `CLOSE`, `noStroke()`, `stroke()`, `strokeWeight()`, `noFill()`, `fill()`, `ellipse()`, `triangle()`, `line()`
+---
