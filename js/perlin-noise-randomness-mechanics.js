@@ -621,6 +621,7 @@ function updateFish() {
       if (f.t >= 1.0) {
         f.phase   = 'splashing';
         f.splashT = 0;
+        if (typeof playFishSplash === 'function') playFishSplash(f.x);
         f.drops   = [];
         for (let d = 0; d < 8; d++) {
           let ang = random(-PI + 0.4, -0.4);
