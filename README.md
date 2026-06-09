@@ -111,4 +111,87 @@ All four mechanics share a single canvas, unified by one concept- ecosystem heal
 | Passive / no interaction |  Grass sways, water ripples, clouds drift |
 
 ---
+---
 
+# Karma 
+---
+ 
+## Techniques
+ 
+**Architecture — DOM + p5 hybrid**: SVG assets live as real DOM elements, rendered as crisp vectors at any resolution. A transparent p5 canvas sits on top as an overlay, drawing only procedural effects (rain, fireflies, flowers, fish, nests). This separation keeps the illustrated art style intact while allowing dynamic animation.
+ 
+**Shared state machine (`state.js`)**: A single `STATE` object acts as the project's nervous system. All four mechanic files read health, day/night, collapse and rain values from it. Health changes trigger smooth lerped transitions rather than snapping, so every visual response feels gradual.
+ 
+**CSS transforms for SVG animation**: Rather than redrawing SVGs each frame, we apply `translate()` via `element.style.transform` — this is far more performant than canvas-based vector drawing and preserves the SVG's native rendering quality.
+ 
+**p5.sound FFT**: The audio mechanic analyses bass frequencies each frame and exposes a `getBassPulse()` value. Spawned flowers read this to subtly pulse in size to the beat, linking sound and visuals without either mechanic knowing about the other.
+
+**Perlin noise for organic motion**: Every swayable SVG layer has a unique `noiseSeed` so trees, grass, and hills move independently. Rain particles use a shared wind noise stream so drops lean coherently. Fireflies and fish use per-object seeds for fully independent drift.
+ 
+**Canvas clipping for depth**: Rain particles and fish are drawn in multiple depth passes, each clipped to a y-range via `drawingContext.save/clip/restore`. This creates a parallax depth illusion on a single flat canvas.
+ 
+---
+## Mechanic Ownership
+
+Each team member worked on their individual part and common project areas were ditributed equally. Each memeber experiemented with approaches to implement all mechanisms together and final decision was made after discussions and deliberations.
+
+| Team Member | Mechanic | Description |
+|---|---|---|
+| **Angel Huang** | User Input | Handles all mouse and keyboard events. Left-click grows flowers, drag scatters seed trails, double-click forms nests, R triggers rain, X causes damage (3× collapses the scene). Each action updates the shared health score. |
+| **Shweta Kamble** | Perlin Noise & Randomness | Drives all organic motion — layer sway, rain particles (5,600 across 4 depth layers), fireflies (135), fish (3 types, 3 zones), perlin noise and randomness in flower design and nest shape. Also designed `state.js`, the shared state machine that combines all mechanics and operates state changes. |
+| **Rachel Seah** | Time-Based | Manages cloud drift, sun/moon rise and set, day/night crossfade, passive bird flock, and ocean sway. Uses `millis()` and `frameCount` to create cascading, time-delayed consequences that give the scene its emotional rhythm. |
+| **Nishant Reddy** | Audio | Loads and crossfades four ambient tracks (day, rain, night, collapse) based on `STATE.currentState`. FFT analysis extracts bass energy each frame to drive a visual pulse on spawned flowers, binding sound and visuals together. |
+ 
+---
+
+## AI Acknowledgement
+ 
+We used **Claude (Anthropic)** during development as a coding assistant — to help understand p5.js functions, debug logic errors and get unstuck on specific implementations. The creative direction, interaction design, visual aesthetic and all mechanic concepts were developed independently by the team.
+ 
+---
+
+## Interaction Instructions
+ 
+1. **Do nothing** — the scene is always alive. Grass sways, clouds drift, birds fly, water ripples.
+2. **Click anywhere on the grass** to plant a flower. Each flower is unique — different petal style, colour and size.
+3. **Click and drag** across the grass to scatter a trail of seeds that bloom sequentially.
+4. **Double-click on the tree areas** (far left or far right of the scene) to form a nest with eggs.
+5. **Press R** to call rain — flowers grow and fish jump from the ocean. Rain lasts ~8 seconds.
+6. **Press X** to introduce damage — trees fade, water darkens, flowers wilt. 
+7. Press X three times to trigger full collapse.
+8. **Plant 5 flowers** to earn the dusk/firefly moment — the sky shifts to night and fireflies drift in. This resets and can be triggered again.
+9. **Move the mouse** slowly across the scene to see the parallax depth effect on the landscape layers.
+
+> Audio starts on your first click or keypress (browser autoplay policy requires a user gesture).
+ 
+
+# Individual Contributions
+
+## Shweta Kamble (skam0940) - 
+Mechanics - Perlin Noise & Randomness, Shared State Architecture
+
+---
+
+
+### Perlin Noise & Randomness Mechanics (`perlin-noise-randomness-mechanics.js`)
+
+- **Rain particle system**: 5,600 particles across 4 depth layers (BG1, BG2, MID, FG), each with independent noise-driven angle, speed and opacity. A shared global wind noise stream makes all drops lean coherently. Canvas clipping per depth layer creates a parallax illusion on a single 2D surface.
+- **Firefly system**: 135 fireflies (60 mid-scene + 75 foreground) each with unique `noiseX`, `noiseY`, `noiseB` seeds. A soft three-zone boundary (hard floor / soft zone / free zone) prevents drift clustering while keeping all movement fully organic.
+- **Fish system**: three distinct fish shapes (streamlined, chubby, dart), three colour palettes, three spawn zones (including a distant small-fish zone), grouped rain-triggered spawning spread across the full rain duration and ambient spawning during calm health. Night-aware colour tinting via `STATE.dayNight`.
+- **Scene-wide sway**: assigned every SVG layer a unique `noiseSeed` so trees, bushes, hills and flowers all sway independently via `noise(seed, STATE.noiseT)` - no two elements ever move in sync.
+- **Nest design**: every vertex of the nest — outer ring (28 pts), inner hollow (22 pts), 12 radial twig strokes, rim stroke — is displaced by `noise(noiseSeed + position, STATE.noiseT)`, making each nest organically shaped and subtly breathing in sync with the rest of the scene.
+- **Spawned flower sway**: each flower carries a unique `swayT` noise seed; stem bezier and petal head drift together via `STATE.noiseT` so planted flowers immediately join the scene's wind.
+
+---
+
+
+### state.js — Artwork Transitions Logic
+
+- Designed and built `state.js`: the single shared `STATE` object every file reads from. It helps the four otherwise isolated mechanics communiate.
+- Defined the health system (`addHealth`, `subtractHealth`, 0–100 scale) that drives every visual change in the scene — colour degradation, collapse, night transition and audio shifts all read from `STATE.health`.
+- Implemented the state machine (`PASSIVE` / `COLLAPSE` / `FIREFLIES`) and all transitions: `triggerCollapse()`, `triggerFireflies()`, `triggerRain()`, `returnToPassive()`. Every mechanic fires into this machine and reads back from it — parallel to nervous system.
+- Built the smooth `collapseTint` lerp system so health changes never snap visually — all four mechanics benefit without needing their own easing logic.
+
+---
+
+**p5.js functions used:** `noise()`, `noiseSeed()`, `random()`, `beginShape()`, `vertex()`, `curveVertex()`, `map()`, `lerp()`, `constrain()`, `millis()`, `sin()`, `cos()`, `atan2()`, `sqrt()`
